@@ -29,6 +29,10 @@ In this test west and and east are IPsec gateways and the sunset is running [TRe
  +------| sunset |--------+
  |                        |
  +--| west |====| east |--+
+
+ --  Red/un encrypted traffic
+ ==  Black/IPsec/Encrypted traffc
+
 </pre>
 
 
@@ -45,9 +49,12 @@ This test uses a loopback (also called cross-connect) setup with only one host, 
  +----------------------+
 </pre>
 
-###  Linux contention in xfrm_state_find ()
+### Linux kernel contention in xfrm_state_find ()
 This is a known limitation of the Linux XFRM (IPsec) implementation. We hope to resolve this issue and hope to fix the contention in a future update.
 ![Flamegraph xfrm_state_find]({static}/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg)
 *Figure: Falmegraph xfrm_state_find
 
 Look at the function xfrm_state_find(), [Flamegraph](https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html)
+
+## Linux kernel spin lock in tx path
+[_raw_spin_lock_bh() Flamegraph]({static}/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=543.5&y=373)
