@@ -25,7 +25,8 @@ make&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;&l
 
 &lt;p&gt;To always use Python 3.12 with TRex, create a virtual environment (one-time setup). After that, activate this venv every time you work with TRex.&lt;/p&gt;
 &lt;p&gt;Run this from &lt;code&gt;/root&lt;/code&gt; or another persistent location:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;apt&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;python3.12-venv
+python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;h3&gt;Activating the Python 3.12 venv&lt;/h3&gt;
@@ -42,16 +43,6 @@ make&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;&l
 dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
 apt-get&lt;span class="w"&gt; &lt;/span&gt;update
 apt-get&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
-dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
-mst&lt;span class="w"&gt; &lt;/span&gt;start
-mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-
-&lt;p&gt;If v3.2.1 is not available for your setup, an earlier release also works:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.0.0/host/doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
-dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
-apt&lt;span class="w"&gt; &lt;/span&gt;update
-apt&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
 dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
 mst&lt;span class="w"&gt; &lt;/span&gt;start
 mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
@@ -110,7 +101,7 @@ sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;
 &lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;h2&gt;Appendix B: TRex permission issue&lt;/h2&gt;
+&lt;h2&gt;Appendix B: TRex scapy permission issue&lt;/h2&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./t-rex-64 -i -c 4 --cfg /etc/trex_cfg.yaml
 
     Error: current path is not readable by user &amp;quot;nobody&amp;quot; (starting at /root).
@@ -126,6 +117,72 @@ sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;
 Could not start scapy daemon server, which is needed by GUI to create packets.
 If you don&amp;#39;t need it, use --no-scapy-server flag.
 ERROR encountered while configuring TRex system
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Appendix C: TRex v3.08 MTU setting&lt;/h2&gt;
+&lt;p&gt;Trex v3.08 seems to need larger mtu set on Mellanox CX cards. The OFED/DPDK should newer than 25.07.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./t-rex-64 -i --no-scapy
+The ports are bound/configured.
+Starting  TRex v3.08 please wait  ...
+ set driver name net_mlx5
+ driver capability  : TCP_UDP_OFFLOAD  TSO  LRO
+ set dpdk queues mode to DROP_QUE_FILTER
+ Number of ports found: 2
+zmq publisher at: tcp://*:4500
+mlx5_net: port 0 failed to set MTU to 65518
+ETHDEV: Port0 dev_configure = -22
+EAL: Error - exiting with code: 1
+Cannot configure device: err=-22, port=0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;ofed_info -s
+OFED-internal-25.10-1.7.1:
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;workaround:
+&lt;code&gt;port_mtu: 9000&lt;/code&gt;&lt;/p&gt;
+&lt;h2&gt;Appendix D: Trex Config file&lt;/h2&gt;
+&lt;p&gt;cat /etc/trex_cfg.yaml&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="k"&gt;-&lt;/span&gt; version         : 2
+  port_limit      : 2
+  interfaces:       [&amp;quot;02:00.0&amp;quot;, &amp;quot;02:00.1&amp;quot;]
+
+  platform:
+    master_thread_id: 0
+    latency_thread_id: 1
+    dual_if:
+      &lt;span class="k"&gt;-&lt;/span&gt; socket: 0
+        threads: [2,3,4,5,6,7]
+
+  port_info       :  # Port IPs.
+          &lt;span class="k"&gt;-&lt;/span&gt; ip         : 192.0.1.250
+            default_gw : 192.0.1.254
+          &lt;span class="k"&gt;-&lt;/span&gt; ip         : 192.0.2.250
+            default_gw : 192.0.2.254
+  port_mtu: 9000
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Appendix E: Trex with scapy&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;pip install scapy&lt;/code&gt; This may give you permission issues.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;pip&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;install&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;
+&lt;span class="n"&gt;Collecting&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="n"&gt;Downloading&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;2.7&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;py3&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;none&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;any&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;whl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;metadata&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;5.8&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;kB&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Downloading&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;2.7&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;py3&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;none&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;any&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;whl&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;2.6&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;MB&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="err"&gt;━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;2.6&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="mf"&gt;2.6&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;MB&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;19.1&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;MB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;eta&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;00&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;00&lt;/span&gt;
+&lt;span class="n"&gt;Installing&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;collected&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;
+&lt;span class="n"&gt;Successfully&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;installed&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;2.7&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;venv&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;3.12&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;202260217&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;sun&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="k"&gt;var&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tmp&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v3&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;08&lt;/span&gt;&lt;span class="c1"&gt;# ./t-rex-64 -i&lt;/span&gt;
+&lt;span class="n"&gt;Starting&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Scapy&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;server&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Scapy&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;server&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;failed&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;to&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;run&lt;/span&gt;
+&lt;span class="n"&gt;Output&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;taskset: failed to execute /root/venv/bin/python3: Permission denied&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;
+&lt;span class="n"&gt;Could&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;start&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;scapy&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;daemon&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;server&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;which&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;needed&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;by&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;GUI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;to&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;packets&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+&lt;span class="n"&gt;If&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;you&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;don&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;t need it, use --no-scapy-server flag.&lt;/span&gt;
+&lt;span class="n"&gt;ERROR&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;encountered&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;while&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuring&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;TRex&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;system&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;chmod 755 /root/venv/bin/python3
+chmod 755 /root/venv/bin/python3.12
+chmod 755 /root/venv/bin/python3
+chmod 755 /root/venv/bin/python3.12
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 TRex Testing (Finland, 20-28 Aug)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html" rel="alternate"/><published>2025-08-28T00:00:00+00:00</published><updated>2025-08-28T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-28:/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04 - 25.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
 &lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) and 25.04 (Plucky Puffin).&lt;/p&gt;
 &lt;h3&gt;Prerequisites&lt;/h3&gt;
