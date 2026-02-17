@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)
+    </h2>
+  </header>
+  <p>The testing started as part of IETF 123 Hackathon and continued since then.</p>
+<h2>Test setup</h2>
+<p>The initial test setup have four hosts or servers. Here, <em>west</em> and <em>east</em> function as IPsec gateways, also known as black servers. Meanwhile, <em>sunseti</em> and <em>sunrise</em> act as traffic generators or receivers, referred to as red servers.</p>
+<pre>
+| sunset |-----| west |====| east |----| sunrise |
+</pre>
+
+<p>Figure: Initial topology</p>
+<h3>Test hosts specification : 4 hosts</h3>
+<ul>
+<li>Supermicro H13SSW Motherboard</li>
+<li>AMD EPYC 9135 16-Core Processor (a.k.a. Bergamo, or Zen 5)</li>
+<li>NIC: Mellanox MT28800 ConnectX-5 Ex (100Gbps NIc)</li>
+<li>NIC: Broadcom BCM57508 NetXtreme-E (only on sunrise, 100Gbps NIc)</li>
+</ul>
+<h2>Test Results</h2>
+<h3>TREX pCPU UDP Results (2025-07-28)</h3>
+<p>In this test, west and east are IPsec gateways, and sunset is running <a href="https://trex-tgn.cisco.com/trex/doc/trex_appendix_mellanox.html">TRex</a> traffic generator. It sends on one port while receiving the traffic on the second port, on the same host.</p>
+<p><img alt="TREX pCPU UDP Results" src="./images/20250728-trex-pcpu-udp.png">
+<em>Figure: UDP performance with pCPU (2025-07-28)</em></p>
+<p>Each flow is 3.3Gbps. The <a href="https://trex-tgn.cisco.com">TRex</a> on sunset sends the traffic to west, which is an IPsec gateway that encrypts the traffic and forwards it to the second IPsec gateway, east. East decrypts the IPsec and sends it back to sunset. Sunset receives it on the second interface. The results clearly show total IPsec throughput increases linearly with the number of flows. Each flow is pinned to each CPU. Adding CPU increases the IPsec throughput as expected in <a href="https://www.rfc-editor.org/rfc/rfc9611.html">RFC9611</a>.</p>
+<pre>
+ +-<<<---| sunset |-------+
+ |                        |
+ +--| west |====| east |--+
+</pre>
+<p>Figure: TRex IPsec test topology</p>
+<h3>TREX Loop Test Results (2025-08-15)</h3>
+<p>This test uses a loopback (also called cross-connect) setup with only one host, sunset. It checks how fast the <a href="https://trex-tgn.cisco.com">TRex</a> traffic generator can send and receive data without involving Linux packet forwarding. The results show the maximum speed you can expect before adding IPsec gateways.</p>
+<p><img alt="TREX Loop Test Results" src="./images/20250815-trex-loop-test.png">
+<em>Figure: Loop test results (2025-08-15)</em></p>
+<pre>
+ +--<<<---| sunset |-------+
+ |                         |
+ +-------------------------+
+</pre>
+<p>Figure: TRex loopback test topology</p>
+<h2>Future work: Linux contention analysis</h2>
+<p>We use the Linux profiling tool <a href="https://perfwiki.github.io/main">perf</a> to identify contention points. The following examples from IPsec sender.</p>
+<h3><a href="./images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;y=341">xfrm_state_find()</a> contention.</h3>
+<p>When using pCPU i.e. multiple CPU looking up state, even with states cached on policy there is CPU contention. You can see this in perf output as well as in Flamegrah clearly.
+This is a known limitation of the Linux XFRM (IPsec) implementation. We hope to resolve this issue and hope to fix the contention in a future update.
+<img alt="Flamegraph xfrm_state_find()" src="./images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg">
+<em>Figure: Falmegraph xfrm_state_find</em></p>
+<p>The function <a href="./images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;y=341">xfrm_state_find()</a>. For more details on Flamegraphs, refer to <a href="https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html">Brendan Gregg's page</a>. Is called on each sending cpu on </p>
+<h3><a href="./images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=543.5&amp;y=373">_raw_spin_lock_bh()</a> contention.</h3>
+<p>This contention appears on sending side and _raw_spin_lock_bh() called in transmit path. </p>
+<h4>Example of perf commandline.</h4>
+<p>This records perf counters on CPU 1, which we identified as sending CPU on west.</p>
+<pre>
+perf record -b -e cycles,L1-dcache-load-misses,L1-icache-load-misses:k -g -C 5 --call-graph dwarf
+perf report -g
+</pre>
+
+<h2>Scripts to Tune the System</h2>
+<ul>
+<li>
+<p><a href="./202507-madrid-pcpu-testing/set-irq-affinity.sh">set-irq-affinity.sh</a>
+   This script optimizes packet processing by preventing <code>skb_free</code> from being handled by a different CPU when using a Mellanox ConnectX NIC. By configuring RSS (Receive Side Scaling), it ensures that the same CPU manages  both packet processing and freeing, particularly enhancing performance when pCPU affinity is enabled, and multiple CPUs are in use. Execute this script on each network interface, for red and black interface.</p>
+</li>
+<li>
+<p><a href="./202507-madrid-pcpu-testing/west/west-black.sh">Flow pinning on black interface</a>
+   Use this script to pin ESP-in-UDP traffic flows across different CPUs on a Linux system, based on UDP soruce port.. Run this script on the IPsec gateway ,east and west, black NICs.</p>
+</li>
+<li>
+<p><a href="./202507-madrid-pcpu-testing/west/west-red-udp.sh">Flow pinning on red interface</a>
+   This script is intended to distribute red traffic across several CPUs, allowing efficient pCPU utilization for sending. It should be run on the IPsec gateway, specifically on the west in your scenario. For bi-directional traffic, execute this on both IPsec gateways for the black interface.</p>
+</li>
+</ul>
+<h2>For future work</h2>
+<p>Ensure CPUs used for networking, IPsec data path, are isolated from general-purpose tasks (<code>isolcpus</code> kernel boot option). - Use high-resolution network and CPU measurements (<code>nstat</code>, <code>mpstat -P ALL 1</code>, etc.).  Monitor for dropped packets and IRQ balancing using <code>ethtool -S</code> and <code>irqbalance</code> status.</p>
+<h3>check if Ethernet is pausing.</h3>
+<pre>
+ethtool --include-statistics -a  black
+Pause parameters for black:
+Autonegotiate:  off
+RX:     on
+TX:     on
+Statistics:
+  tx_pause_frames: 0
+  rx_pause_frames: 10542401
+</pre>
+  <footer>
+    <!-- <p>Published: <time datetime="2025-08-15T00:00:00+00:00"> -->
+    <!--     Fri 15 August 2025 -->
+    <!--   </time></p> -->
+    <p>
+      <a href="./category/research.html">Research</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>

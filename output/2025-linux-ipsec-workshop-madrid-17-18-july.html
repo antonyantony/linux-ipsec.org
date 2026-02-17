@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2025 Linux IPsec workshop, Madrid (17 - 18 July)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2025 Linux IPsec workshop, Madrid (17 - 18 July)
+    </h2>
+  </header>
+  <p>The 2025 Linux IPsec workshop was held on July 17th - 18th in the scorching hot Madrid,
+directly before the IETF Meeting 123.
+The workshop began on thrusday morning with the welcome speech by Steffen Klassert, who organized the event.</p>
+<h2>Presentation Notes and Slides</h2>
+<h3><a href="./slides/2025/brunner-strongswan-developments.pdf">Recent Developments in strongSwan</a> by Tobias Brunner</h3>
+<p>Tobias presented an overview of new features added in recent strongSwan releases.</p>
+<p>These new features include:</p>
+<ul>
+<li>Narrowing with Trap Policies</li>
+<li>Per-CPU SAs</li>
+<li>AGGFRAG Mode</li>
+<li>Regular Expressions</li>
+<li>EAP-Identity Matching</li>
+</ul>
+<h3><a href="./slides/2025/steffen-pqc-auth-for-ikev2.pdf">IKEv2 Signature Authentication using ML-DSA</a> by Andreas Steffen</h3>
+<p>Andreas presented about the current state of the PQC authentication standards, such as ML-DSA, SLH-DSA and FN-DSA. The presentation included the preliminary strongSwan implementation of IKEv2 signature authentication using ML-DSA.</p>
+<h3><a href="./slides/2025/smyslov-g-ikev2.pdf">Group IPsec SAs and key management</a> by Valery Smyslov</h3>
+<p>Valery presented about securing IP multicast using G-IKEv2.
+The G-IKEv2 document has been in development for more than 15 years, and is expeted to be published as an RFC soon.</p>
+<h3><a href="./slides/2025/soini-handling-ipsec-with-foomuuri.pdf">Handling IPsec traffic with nftables based firewall</a> by Tuomo Soini</h3>
+<p>Tuomo gave a presentation about a recent nftables firewall project, Foomuuri. The main focus of the presentation was on how IPsec secured traffic is handled in Foomuuri.</p>
+<h3><a href="./slides/2025/richardson-whatsacp.pdf">The Autonomic Control Plane (ACP)</a> and <a href="./slides/2025/richardson-minerva.pdf">Minerva Connect</a> by Michael Richardson</h3>
+<p>Michael held a presentation about the Autonomic Control Plane (ACP).
+The presentation included some basics of ACP, as well as some insights to Michael's solution called Minerva.
+The architecture and challenges in implementation were discussed.</p>
+<h3><a href="./slides/2025/soini-enterprise-networking-with-ipsec-and-dynamic-routing.pdf">Enterprise Networking with IPsec and Dynamic Routing</a> by Simo Soini</h3>
+<p>Simo presented his plans for an experiment on enterprise networking using IPsec for securing the traffic and dynamic routing between tunnels.</p>
+<h3><a href="./slides/2025/tschofenig-jansen-ipsec-performance-test.pdf">IPsec Performance Tests</a> by Hannes Tschofenig and Kai Jansen</h3>
+<p>Hannes and Kai presented their IPsec performance tests with strongSwan and two 100GB Mellanox NICs.
+The discussion about the results and IPsec performance optimization in general continued during the IETF 123 Hackathon.</p>
+<h3><a href="./slides/2025/migault-diet-esp.pdf">Diet-ESP and Integration of IPsec</a> by Daniel Migault</h3>
+<p>Daniel presented SeCPRI, an IPsec based security layer for eCPRI, which uses Diet-ESP for compressing the encrypted messages.</p>
+<h3><a href="./slides/2025/klassert-enhanced-esp.pdf">Enhanced ESP</a> by Steffen Klassert</h3>
+<p>Steffen presented an overview about the EESP protocol design.
+There was a lot of discussion concerning the requirements and specifics of the protocol.</p>
+<p>Related links:</p>
+<ul>
+<li><a href="https://netdevconf.info/0x18/docs/netdev-0x18-paper43-talk-slides/Introduction%20to%20Falcon%20Reliable%20Transport.pdf">Google's reason for telemetry use case for crypto offset</a></li>
+</ul>
+<h3><a href="./slides/2025/brunner-eesp-ikev2.pdf">IKEv2 negotiation for EESP</a> by Tobias Brunner</h3>
+<p>The second presentation by Tobias was about IKEv2 negotiation for the EESP protocol Steffen Klassert presented about.
+The focus was on the slight differences between negotiation for ESP versus EESP.</p>
+<h3><a href="./slides/2025/xialiang-eesp-stateless-encryption.pdf">EESP Stateless Encryption Scheme</a> by Frank Xialiang</h3>
+<h3>Industry Trends in HPC/AI workloads and ESP-like Protocols by Anthony Anthony</h3>
+<p>Anthony gave an overview about industry trends in high-performance computing and AI.</p>
+<p>Related links:</p>
+<ul>
+<li><a href="https://netdevconf.info/0x18/docs/netdev-0x18-paper43-talk-slides/Introduction%20to%20Falcon%20Reliable%20Transport.pdf">Netdev 0x18 Falcon Talk 2024</a></li>
+<li><a href="https://ultraethernet.org/wp-content/uploads/sites/20/2025/06/UE-Specification-6.11.25.pdf">UET Specification 1.0 June 2025</a></li>
+<li><a href="https://netdevconf.info/0x19/sessions/bof/networking-for-ai-bof.html">AI Networking Summary Netdev 0x19</a></li>
+</ul>
+<h3><a href="./slides/2025/smyslov-stateless-encryption.pdf">Stateless encryption</a> by Valery Smyslov</h3>
+<p>Valery's second presentation was about stateless encryption,
+and more specifically about how much security can be sacrificed in favor of performance.</p>
+<h3>Linux XFRM Code Path by Anthony Anthony</h3>
+<p>Anthony gave a presentation about the XFRM code in Linux kernel.
+The XFRM code is challenging to understand by just reading the code, and this started some fruitful conversation about how to better understand and learn this code.
+Inspired by this discussion, Christian Hopps gave a short demonstration about semantic code navigation using Language Servers.
+Language servers can communicate with code editors (such as Emacs, Neovim or VSCode) using language server protocol.</p>
+<p>Related links:</p>
+<ul>
+<li><a href="https://www.usenix.org/conference/atc25/presentation/berger">Keynote from Usenix-25/OSDI 25</a></li>
+</ul>
+<h3>IPsec Interoperability discussion by Michael Richardson</h3>
+<p>Michael lead a discussion about interoperability between different IPsec implementations.
+There was an idea about an event for testing interoperability between as many IPsec implementations as possible.</p>
+<h3><a href="./slides/2025/kivinen-handling-fragments.pdf">Handling fragments</a> by Tero Kivinen</h3>
+<p>Tero presented about handling incoming fragments in IPsec, and the three methods for this as listed in <a href="https://datatracker.ietf.org/doc/html/rfc4301">RFC4301</a>.</p>
+<h3>Future of the IPsec Workshop and Closing by Steffen Klassert</h3>
+<p>The 2025 IPsec Workshop was finished with some final words about the workshop and it's future from the organizer, Steffen Klassert. Huge thanks to Steffen for organizing the workshop, and to everyone who attended!</p>
+  <footer>
+    <!-- <p>Published: <time datetime="2025-07-19T00:00:00+00:00"> -->
+    <!--     Sat 19 July 2025 -->
+    <!--   </time></p> -->
+    <p>
+      <a href="./category/conferences.html">Conferences</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>

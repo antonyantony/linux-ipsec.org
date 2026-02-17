@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>IPsec and Network Security - research</title><link href="https://antonyantony.github.io/linux-ipsec.org/" rel="alternate"/><link href="https://antonyantony.github.io/linux-ipsec.org/feeds/research.atom.xml" rel="self"/><id>https://antonyantony.github.io/linux-ipsec.org/</id><updated>2026-02-12T00:00:00+00:00</updated><entry><title>2026 TRex Testing (Frankfurt, 10-12 Feb)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html" rel="alternate"/><published>2026-02-12T00:00:00+00:00</published><updated>2026-02-12T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2026-02-12:/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS&lt;/p&gt;
+&lt;h3&gt;Prerequisites&lt;/h3&gt;
+&lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Operating System:&lt;/strong&gt; Ubuntu 24.04 LTS&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python:&lt;/strong&gt; Python 3.12 (TRex v3.08 is tied to this version)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CPU:&lt;/strong&gt; Multi-core processor with NICs bound to the cores you are using&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Network:&lt;/strong&gt; Tested with Mellanox ConnectX-5 or ConnectX-7&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DOCA-OFED:&lt;/strong&gt; Must match your OS distribution — https://developer.nvidia.com/networking/doca&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;h3&gt;Installing Python 3.12&lt;/h3&gt;
+&lt;p&gt;TRex v3.08 (current as of Feb 2026) requires Python 3.12, which is older than
+what ships with Ubuntu 24.04.&lt;/p&gt;
+&lt;p&gt;Download the Python 3.12 source tarball:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Extract it, run &lt;code&gt;configure&lt;/code&gt;, and install.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;tar&lt;span class="w"&gt; &lt;/span&gt;-zxf&lt;span class="w"&gt; &lt;/span&gt;Python-3.12.9.tgz
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;Python-3.12.9
+./configure&lt;span class="w"&gt; &lt;/span&gt;--enable-optimizations
+make&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;To always use Python 3.12 with TRex, create a virtual environment (one-time setup). After that, activate this venv every time you work with TRex.&lt;/p&gt;
+&lt;p&gt;Run this from &lt;code&gt;/root&lt;/code&gt; or another persistent location:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Activating the Python 3.12 venv&lt;/h3&gt;
+&lt;p&gt;Each time you log in to work with TRex, activate the venv first:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+&lt;span class="c1"&gt;# To verify:&lt;/span&gt;
+&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.12&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# should show /root/venv/bin/python3.12&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Installing DOCA-OFED&lt;/h2&gt;
+&lt;p&gt;For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.&lt;/p&gt;
+&lt;p&gt;Navigate to the &lt;a href="https://developer.nvidia.com/doca-downloads"&gt;DOCA downloads page&lt;/a&gt; and select the local package for your OS.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.2.1/host/doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
+apt-get&lt;span class="w"&gt; &lt;/span&gt;update
+apt-get&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If v3.2.1 is not available for your setup, an earlier release also works:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.0.0/host/doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+apt&lt;span class="w"&gt; &lt;/span&gt;update
+apt&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Downloading TRex&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;--no-check-certificate&lt;span class="w"&gt; &lt;/span&gt;--no-cache&lt;span class="w"&gt; &lt;/span&gt;https://trex-tgn.cisco.com/trex/release/latest
+mv&lt;span class="w"&gt; &lt;/span&gt;latest&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
+tar&lt;span class="w"&gt; &lt;/span&gt;xvf&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
+mv&lt;span class="w"&gt; &lt;/span&gt;v3.08&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# you may need to chmod 777 first&lt;/span&gt;
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08/
+rm&lt;span class="w"&gt;  &lt;/span&gt;so/x86_64/libstdc++.so.6
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# add this to /etc/sysctl.d to make it permanent.&lt;/span&gt;
+chmod&lt;span class="w"&gt; &lt;/span&gt;-R&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;777&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;At the time of writing, &lt;code&gt;latest&lt;/code&gt; pointed to v3.08.&lt;/p&gt;
+&lt;h2&gt;Starting TRex Server&lt;/h2&gt;
+&lt;p&gt;TRex is installed under &lt;code&gt;/var/tmp/trex-v3.08&lt;/code&gt; on the sunset host. The server runs in the foreground, so start it inside a &lt;code&gt;screen&lt;/code&gt; session — that way you can reattach later with &lt;code&gt;screen -x&lt;/code&gt; to check its output.&lt;/p&gt;
+&lt;p&gt;Activate the venv first, then launch &lt;code&gt;screen&lt;/code&gt; and start TRex inside it:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+screen&lt;span class="w"&gt; &lt;/span&gt;bash
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08
+./t-rex-64&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;--no-scapy&lt;span class="w"&gt; &lt;/span&gt;--cfg&lt;span class="w"&gt; &lt;/span&gt;/etc/trex_cfg.yaml&lt;span class="w"&gt; &lt;/span&gt;-c&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;8&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The server takes a few seconds to initialize.&lt;/p&gt;
+&lt;h3&gt;Running a TRex Test Script&lt;/h3&gt;
+&lt;p&gt;From a second terminal (also inside the Python 3.12 venv), run one of the test scripts. For example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/ietf-123-pcpu/tests-trex
+./u1.py
+./u1.py&lt;span class="w"&gt; &lt;/span&gt;--src-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.1.253&lt;span class="w"&gt; &lt;/span&gt;--dst-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.2.253&lt;span class="w"&gt; &lt;/span&gt;--pps&lt;span class="w"&gt; &lt;/span&gt;1M&lt;span class="w"&gt; &lt;/span&gt;--frame-size&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1518&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--duration&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows-end&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--runs&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;u1.py&lt;/code&gt; is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.&lt;/p&gt;
+&lt;h2&gt;Appendix A: Mellanox DOCA-OFED Diagnostics&lt;/h2&gt;
+&lt;p&gt;This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.&lt;/p&gt;
+&lt;p&gt;After installing DOCA-OFED, run &lt;code&gt;mst start&lt;/code&gt; once. To verify that your NICs are detected, check the output of &lt;code&gt;mst status -v&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Unknown&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;argument&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;--v&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;sunset&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;~/&lt;/span&gt;&lt;span class="n"&gt;ietf&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;123&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pcpu&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tests&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="c1"&gt;# mst status -v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;devices&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="n"&gt;DEVICE_TYPE&lt;/span&gt;&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt;                           &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt;       &lt;/span&gt;&lt;span class="n"&gt;RDMA&lt;/span&gt;&lt;span class="w"&gt;                                               &lt;/span&gt;&lt;span class="n"&gt;NET&lt;/span&gt;&lt;span class="w"&gt;                                     &lt;/span&gt;&lt;span class="n"&gt;NUMA&lt;/span&gt;
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.1&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_1&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redwest&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Appendix B: TRex permission issue&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./t-rex-64 -i -c 4 --cfg /etc/trex_cfg.yaml
+
+    Error: current path is not readable by user &amp;quot;nobody&amp;quot; (starting at /root).
+    Two possible solutions:
+
+    1. (Recommended)
+        Copy TRex to some public location (/tmp or /scratch, assuming it has proper permissions (chmod 777 etc.))
+
+    2. (Not recommended)
+        Change permissions of current path. (Starting from directory /root).
+        chmod 777 /root -R
+
+Could not start scapy daemon server, which is needed by GUI to create packets.
+If you don&amp;#39;t need it, use --no-scapy-server flag.
+ERROR encountered while configuring TRex system
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 TRex Testing (Finland, 20-28 Aug)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html" rel="alternate"/><published>2025-08-28T00:00:00+00:00</published><updated>2025-08-28T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-28:/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04 - 25.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) and 25.04 (Plucky Puffin).&lt;/p&gt;
+&lt;h3&gt;Prerequisites&lt;/h3&gt;
+&lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Operating System:&lt;/strong&gt; Ubuntu 24.04 LTS or Ubuntu 25.04&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python:&lt;/strong&gt; Python 3.9 (TRex v3.06 is tied to this version)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CPU:&lt;/strong&gt; Multi-core processor with NICs bound to the cores you are using&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Network:&lt;/strong&gt; Tested with Mellanox ConnectX-5 or ConnectX-7&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DOCA-OFED:&lt;/strong&gt; Must match your OS distribution — https://developer.nvidia.com/networking/doca&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;h3&gt;Installing TRex with Python 3.9&lt;/h3&gt;
+&lt;p&gt;For these tests, I used TRex v3.06 (as of July 2025). This version requires an
+older Python runtime (3.8-3.9) than what ships with modern Linux distributions
+such as Ubuntu 25.04.&lt;/p&gt;
+&lt;p&gt;Download the Python 3.9 source tarball:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;wget https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Extract it, run &lt;code&gt;configure&lt;/code&gt;, and install.&lt;/p&gt;
+&lt;p&gt;To always use Python 3.9, create a virtual environment (one-time setup). After that, activate this venv every time you work with TRex.&lt;/p&gt;
+&lt;p&gt;Run this from &lt;code&gt;/root&lt;/code&gt; or another persistent location:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;python3.9&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Log in and activate the Python 3.9 venv&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root
+&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;./venv/bin/activate
+&lt;span class="c1"&gt;# To verify:&lt;/span&gt;
+&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.9&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;#python3.9 is hashed (/root/venv/bin/python3.9)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Installing DOCA-OFED&lt;/h2&gt;
+&lt;p&gt;For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.0.0/host/doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+apt&lt;span class="w"&gt; &lt;/span&gt;update
+apt&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Downloading TRex&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;--no-check-certificate&lt;span class="w"&gt; &lt;/span&gt;--no-cache&lt;span class="w"&gt; &lt;/span&gt;https://trex-tgn.cisco.com/trex/release/latest
+tar&lt;span class="w"&gt; &lt;/span&gt;xvf&lt;span class="w"&gt; &lt;/span&gt;latest
+mv&lt;span class="w"&gt; &lt;/span&gt;v3.06&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06/
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06/
+git&lt;span class="w"&gt; &lt;/span&gt;init
+git&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;.
+git&lt;span class="w"&gt; &lt;/span&gt;commit
+rm&lt;span class="w"&gt;  &lt;/span&gt;so/x86_64/libstdc++.so.6
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;../
+mv&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06&lt;span class="w"&gt; &lt;/span&gt;/var/tmp
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# add this to /etc/sysctl.d to make it permanent.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;At the time of writing, &lt;code&gt;latest&lt;/code&gt; pointed to v3.06.&lt;/p&gt;
+&lt;h2&gt;Starting TRex Server&lt;/h2&gt;
+&lt;p&gt;TRex is installed under &lt;code&gt;/var/tmp/trex-v3.06&lt;/code&gt; on the sunset host.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;
+&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.06
+./t-rex-64&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;--no-scapy&lt;span class="w"&gt; &lt;/span&gt;--cfg&lt;span class="w"&gt; &lt;/span&gt;/etc/trex_cfg.yaml&lt;span class="w"&gt; &lt;/span&gt;-c&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;8&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Start the TRex server once and leave it running in the foreground. I prefer to run it inside a &lt;code&gt;screen&lt;/code&gt; session so you can reattach later with &lt;code&gt;screen -x&lt;/code&gt; to see the output. The server must be started within the Python 3.9 venv.&lt;/p&gt;
+&lt;p&gt;I recommend starting &lt;code&gt;screen bash&lt;/code&gt; from the activated virtual environment, then launching the TRex server inside that screen session.&lt;/p&gt;
+&lt;p&gt;It will take a few seconds to start and will remain running in the foreground.&lt;/p&gt;
+&lt;h3&gt;Running a TRex Test Script&lt;/h3&gt;
+&lt;p&gt;From a second terminal (also inside the Python 3.9 venv), run one of the test scripts. For example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/ietf-123-pcpu/tests-trex
+./u1.py
+./u1.py&lt;span class="w"&gt; &lt;/span&gt;--src-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.1.253&lt;span class="w"&gt; &lt;/span&gt;--dst-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.2.253&lt;span class="w"&gt; &lt;/span&gt;--pps&lt;span class="w"&gt; &lt;/span&gt;1M&lt;span class="w"&gt; &lt;/span&gt;--frame-size&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1518&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--duration&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows-end&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--runs&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;u1.py&lt;/code&gt; is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.&lt;/p&gt;
+&lt;h2&gt;Appendix A: Mellanox DOCA-OFED Diagnostics&lt;/h2&gt;
+&lt;p&gt;This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.&lt;/p&gt;
+&lt;p&gt;After installing DOCA-OFED, run &lt;code&gt;mst start&lt;/code&gt; once. To verify that your NICs are detected, check the output of &lt;code&gt;mst status -v&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Unknown&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;argument&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;--v&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;sunset&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;~/&lt;/span&gt;&lt;span class="n"&gt;ietf&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;123&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pcpu&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tests&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="c1"&gt;# mst status -v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;devices&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="n"&gt;DEVICE_TYPE&lt;/span&gt;&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt;                           &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt;       &lt;/span&gt;&lt;span class="n"&gt;RDMA&lt;/span&gt;&lt;span class="w"&gt;                                               &lt;/span&gt;&lt;span class="n"&gt;NET&lt;/span&gt;&lt;span class="w"&gt;                                     &lt;/span&gt;&lt;span class="n"&gt;NUMA&lt;/span&gt;
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.1&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_1&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redwest&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html" rel="alternate"/><published>2025-08-15T00:00:00+00:00</published><updated>2025-08-15T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-15:/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html</id><summary type="html">&lt;p&gt;Test performance improvements using pPCPU &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt; with the Linux Kernel and strongSwan pCPU implementation.&lt;/p&gt;</summary><content type="html">&lt;p&gt;The testing started as part of IETF 123 Hackathon and continued since then.&lt;/p&gt;
+&lt;h2&gt;Test setup&lt;/h2&gt;
+&lt;p&gt;The initial test setup have four hosts or servers. Here, &lt;em&gt;west&lt;/em&gt; and &lt;em&gt;east&lt;/em&gt; function as IPsec gateways, also known as black servers. Meanwhile, &lt;em&gt;sunseti&lt;/em&gt; and &lt;em&gt;sunrise&lt;/em&gt; act as traffic generators or receivers, referred to as red servers.&lt;/p&gt;
+&lt;pre&gt;
+| sunset |-----| west |====| east |----| sunrise |
+&lt;/pre&gt;
+
+&lt;p&gt;Figure: Initial topology&lt;/p&gt;
+&lt;h3&gt;Test hosts specification : 4 hosts&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Supermicro H13SSW Motherboard&lt;/li&gt;
+&lt;li&gt;AMD EPYC 9135 16-Core Processor (a.k.a. Bergamo, or Zen 5)&lt;/li&gt;
+&lt;li&gt;NIC: Mellanox MT28800 ConnectX-5 Ex (100Gbps NIc)&lt;/li&gt;
+&lt;li&gt;NIC: Broadcom BCM57508 NetXtreme-E (only on sunrise, 100Gbps NIc)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Test Results&lt;/h2&gt;
+&lt;h3&gt;TREX pCPU UDP Results (2025-07-28)&lt;/h3&gt;
+&lt;p&gt;In this test, west and east are IPsec gateways, and sunset is running &lt;a href="https://trex-tgn.cisco.com/trex/doc/trex_appendix_mellanox.html"&gt;TRex&lt;/a&gt; traffic generator. It sends on one port while receiving the traffic on the second port, on the same host.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="TREX pCPU UDP Results" src="https://antonyantony.github.io/linux-ipsec.org/images/20250728-trex-pcpu-udp.png"&gt;
+&lt;em&gt;Figure: UDP performance with pCPU (2025-07-28)&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Each flow is 3.3Gbps. The &lt;a href="https://trex-tgn.cisco.com"&gt;TRex&lt;/a&gt; on sunset sends the traffic to west, which is an IPsec gateway that encrypts the traffic and forwards it to the second IPsec gateway, east. East decrypts the IPsec and sends it back to sunset. Sunset receives it on the second interface. The results clearly show total IPsec throughput increases linearly with the number of flows. Each flow is pinned to each CPU. Adding CPU increases the IPsec throughput as expected in &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt;.&lt;/p&gt;
+&lt;pre&gt;
+ +-&lt;&lt;&lt;---| sunset |-------+
+ |                        |
+ +--| west |====| east |--+
+&lt;/pre&gt;
+&lt;p&gt;Figure: TRex IPsec test topology&lt;/p&gt;
+&lt;h3&gt;TREX Loop Test Results (2025-08-15)&lt;/h3&gt;
+&lt;p&gt;This test uses a loopback (also called cross-connect) setup with only one host, sunset. It checks how fast the &lt;a href="https://trex-tgn.cisco.com"&gt;TRex&lt;/a&gt; traffic generator can send and receive data without involving Linux packet forwarding. The results show the maximum speed you can expect before adding IPsec gateways.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="TREX Loop Test Results" src="https://antonyantony.github.io/linux-ipsec.org/images/20250815-trex-loop-test.png"&gt;
+&lt;em&gt;Figure: Loop test results (2025-08-15)&lt;/em&gt;&lt;/p&gt;
+&lt;pre&gt;
+ +--&lt;&lt;&lt;---| sunset |-------+
+ |                         |
+ +-------------------------+
+&lt;/pre&gt;
+&lt;p&gt;Figure: TRex loopback test topology&lt;/p&gt;
+&lt;h2&gt;Future work: Linux contention analysis&lt;/h2&gt;
+&lt;p&gt;We use the Linux profiling tool &lt;a href="https://perfwiki.github.io/main"&gt;perf&lt;/a&gt; to identify contention points. The following examples from IPsec sender.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;amp;y=341"&gt;xfrm_state_find()&lt;/a&gt; contention.&lt;/h3&gt;
+&lt;p&gt;When using pCPU i.e. multiple CPU looking up state, even with states cached on policy there is CPU contention. You can see this in perf output as well as in Flamegrah clearly.
+This is a known limitation of the Linux XFRM (IPsec) implementation. We hope to resolve this issue and hope to fix the contention in a future update.
+&lt;img alt="Flamegraph xfrm_state_find()" src="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg"&gt;
+&lt;em&gt;Figure: Falmegraph xfrm_state_find&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The function &lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;amp;y=341"&gt;xfrm_state_find()&lt;/a&gt;. For more details on Flamegraphs, refer to &lt;a href="https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html"&gt;Brendan Gregg's page&lt;/a&gt;. Is called on each sending cpu on &lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=543.5&amp;amp;y=373"&gt;_raw_spin_lock_bh()&lt;/a&gt; contention.&lt;/h3&gt;
+&lt;p&gt;This contention appears on sending side and _raw_spin_lock_bh() called in transmit path. &lt;/p&gt;
+&lt;h4&gt;Example of perf commandline.&lt;/h4&gt;
+&lt;p&gt;This records perf counters on CPU 1, which we identified as sending CPU on west.&lt;/p&gt;
+&lt;pre&gt;
+perf record -b -e cycles,L1-dcache-load-misses,L1-icache-load-misses:k -g -C 5 --call-graph dwarf
+perf report -g
+&lt;/pre&gt;
+
+&lt;h2&gt;Scripts to Tune the System&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/set-irq-affinity.sh"&gt;set-irq-affinity.sh&lt;/a&gt;
+   This script optimizes packet processing by preventing &lt;code&gt;skb_free&lt;/code&gt; from being handled by a different CPU when using a Mellanox ConnectX NIC. By configuring RSS (Receive Side Scaling), it ensures that the same CPU manages  both packet processing and freeing, particularly enhancing performance when pCPU affinity is enabled, and multiple CPUs are in use. Execute this script on each network interface, for red and black interface.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/west/west-black.sh"&gt;Flow pinning on black interface&lt;/a&gt;
+   Use this script to pin ESP-in-UDP traffic flows across different CPUs on a Linux system, based on UDP soruce port.. Run this script on the IPsec gateway ,east and west, black NICs.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/west/west-red-udp.sh"&gt;Flow pinning on red interface&lt;/a&gt;
+   This script is intended to distribute red traffic across several CPUs, allowing efficient pCPU utilization for sending. It should be run on the IPsec gateway, specifically on the west in your scenario. For bi-directional traffic, execute this on both IPsec gateways for the black interface.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;For future work&lt;/h2&gt;
+&lt;p&gt;Ensure CPUs used for networking, IPsec data path, are isolated from general-purpose tasks (&lt;code&gt;isolcpus&lt;/code&gt; kernel boot option). - Use high-resolution network and CPU measurements (&lt;code&gt;nstat&lt;/code&gt;, &lt;code&gt;mpstat -P ALL 1&lt;/code&gt;, etc.).  Monitor for dropped packets and IRQ balancing using &lt;code&gt;ethtool -S&lt;/code&gt; and &lt;code&gt;irqbalance&lt;/code&gt; status.&lt;/p&gt;
+&lt;h3&gt;check if Ethernet is pausing.&lt;/h3&gt;
+&lt;pre&gt;
+ethtool --include-statistics -a  black
+Pause parameters for black:
+Autonegotiate:  off
+RX:     on
+TX:     on
+Statistics:
+  tx_pause_frames: 0
+  rx_pause_frames: 10542401
+&lt;/pre&gt;</content><category term="research"/></entry></feed>

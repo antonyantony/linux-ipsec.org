@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2024 Linux IPsec workshop, Santa Clara (15 - 16 July)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2024 Linux IPsec workshop, Santa Clara (15 - 16 July)
+    </h2>
+  </header>
+  <h2>Topics</h2>
+<h3>Steffen</h3>
+<ul>
+<li>ESP problem statement</li>
+<li>Wrapped ESP v2</li>
+<li><a href="https://datatracker.ietf.org/doc/draft-klassert-ipsecme-wespv2/">https://datatracker.ietf.org/doc/draft-klassert-ipsecme-wespv2/</a></li>
+<li>(PSP)</li>
+<li>Combined Tunnel-Interfaces (e.g. xfrm and gre/vxlan)</li>
+</ul>
+<h3>Chris Hopps</h3>
+<ul>
+<li>IP-TFS Update</li>
+<li>IP-TFS Upcoming Work (constant send rate w/ congestion control)</li>
+</ul>
+<h3>Yan Yan</h3>
+<ul>
+<li>Android Kernel Networking Unit Tests (30 min.)</li>
+</ul>
+<h3>Feng Wang</h3>
+<ul>
+<li>XFRM interface identifier in packet offload mode (30 min.)</li>
+</ul>
+<h3>Antony</h3>
+<ul>
+<li>Encrypted ESP Ping</li>
+<li><a href="https://datatracker.ietf.org/doc/draft-antony-ipsecme-encrypted-esp-ping/">https://datatracker.ietf.org/doc/draft-antony-ipsecme-encrypted-esp-ping/</a></li>
+</ul>
+<h2>Notes</h2>
+<p>Android Kernel Networking Unit Tests example: <a href="https://android-review.googlesource.com/c/kernel/tests/+/1668886">https://android-review.googlesource.com/c/kernel/tests/+/1668886</a>
+<a href="https://lore.kernel.org/netdev/20220119000014.1745223-2-evitayan@google.com/">https://lore.kernel.org/netdev/20220119000014.1745223-2-evitayan@google.com/</a></p>
+<p>Packet spraying, Falcon: use multiple paths out of order receiing is ok. e.g  matrices data like that</p>
+<h3>Notes from the PSP + WESPv2 Talks on Tuesday morning</h3>
+<ul>
+<li>Widely deplayed.</li>
+<li>10M+ connections</li>
+<li>100K+ connections/sec can be established</li>
+<li>100usec key derivation</li>
+</ul>
+<p>Mutltipath </p>
+<p>No state of SA in the NIC., a.k.a. no SADB, no state.</p>
+<p>Cryptoffset </p>
+<p>Outer UDP DST is not used for RSS entropy</p>
+<p>Outer UDP SRC port used for entropy/ECMP : source avoids well known ports.</p>
+<p>Fixed offset: pointed </p>
+<p>sample active probe</p>
+<p>Version (4 bits):  algorithms in every packet  because stateless decrypting</p>
+<p>KDF: NIST adversied function</p>
+<p>200 M/sec key derivattion </p>
+<p>TX:  Key comes from the socket. Not stored in the NIC</p>
+<p>Device keys:  spi 0 and 1</p>
+<p>Rekey is time bytes. </p>
+<p>IV is time on the device, from PTP clock. </p>
+<p>WESPv2
+* need to be fixed offset hardware parsable fields</p>
+<p>Flow identfier: Hardware flags need to be at a fixed location.</p>
+<p>Crypt offset: only need L3 header a d not intented expose user payload</p>
+  <footer>
+    <!-- <p>Published: <time datetime="2024-07-16T00:00:00+00:00"> -->
+    <!--     Tue 16 July 2024 -->
+    <!--   </time></p> -->
+    <p>
+      <a href="./category/conferences.html">Conferences</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>

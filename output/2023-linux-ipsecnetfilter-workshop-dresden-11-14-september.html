@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2023 Linux IPsec/Netfilter workshop, Dresden (11 - 14 September)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2023 Linux IPsec/Netfilter workshop, Dresden (11 - 14 September)
+    </h2>
+  </header>
+  <h2>Topics</h2>
+<h3>IPsec</h3>
+<h4>Nathan</h4>
+<ol>
+<li>Intro and update on IPsec in Android</li>
+<li>Challenges and learnings from IPsec commercialization on mobile (power, performance, and reliability)<ul>
+<li>Replay window issues esp on cellular</li>
+<li>Keepalive power issues and possible alternatives?</li>
+</ul>
+</li>
+<li>Improving IPv6 ESP support (problem statements, current thoughts, brainstorming w/ the group on each)<ul>
+<li>ESP ping</li>
+<li>ESP keepalive</li>
+<li>Flow labels performance &amp; privacy</li>
+<li>DSCP performance &amp; privacy</li>
+</ul>
+</li>
+<li>Compatibility and signalling<ul>
+<li>Dynamic update problems</li>
+<li>MOBIKE and UDP encap (incl dynamic encap+non-encap receive)</li>
+</ul>
+</li>
+</ol>
+<h4>Tobias</h4>
+<ul>
+<li>Future of strongSwan's high-availability solution and patches for CLUSTERIP now that the latter has been removed from the kernel.</li>
+<li>XFRM_MSG_MIGRATE vs. strongSwan, change the current command or add new one(s)</li>
+</ul>
+<h4>Andreas</h4>
+<p>X.509 Certificate [Re-]Enrollment using stronsSwan pki tool</p>
+<h4>Steffen</h4>
+<ul>
+<li>ESP protocol problems</li>
+<li>NFT/xfrm packet bulking infrastructure (with Pablo)</li>
+<li>Socket policies</li>
+<li>What is needed for an IPsec reference implementation</li>
+</ul>
+<h4>Pablo</h4>
+<p>NFT ﬂowtable forwarding fast path (with Steffen)</p>
+<h4>Thomas</h4>
+<p>Implications of NAT-mapping changes with high line speeds. </p>
+<h4>Chris</h4>
+<ul>
+<li>Quick intro to IP-TFS if needed    </li>
+<li>IPTFS Linux xfrm implementation.</li>
+</ul>
+<h4>Anthony</h4>
+<p>ESPPing Encrypted: how send and receive on Linux (I guess tangential to Nathan's ESPPing and ESPKeep alive).</p>
+<p>Depreciating Unsed xfrm/ipsec features PF_KEY, UDP_ENCAP_ESPINUDP_NON_IKE
+- Are there more you would like to Depreciate?</p>
+<p>Merging pCPU to Kernel : minimal recap on Technology. More on can merge this sooner than later in Linux Kerenel. To catch up on tech details 
+- <a href="https://datatracker.ietf.org/doc/draft-ietf-ipsecme-multi-sa-performance/">https://datatracker.ietf.org/doc/draft-ietf-ipsecme-multi-sa-performance/</a>
+- <a href="https://datatracker.ietf.org/meeting/110/materials/slides-110-ipsecme-ikev2-multi-sa-performance-00">https://datatracker.ietf.org/meeting/110/materials/slides-110-ipsecme-ikev2-multi-sa-performance-00</a></p>
+<p>BEET Mode (Trying bring new Internet Draft to IETF 118, Nov 2023) : details from initial version of the document)</p>
+<h3>Netfilter</h3>
+<h4>Daniel</h4>
+<p>bpf+netfilter integration</p>
+<h4>Quentin</h4>
+<p>bpfilter, and its relation to iptables and nftables.</p>
+<h4>Florian</h4>
+<ul>
+<li>Bridge Netfilter+conntrack: Conntrack race conditions with L2 (conntrack-on-bridge)</li>
+<li>Various problems with netfilter and nftables in kernel and userspace</li>
+<li>nftables fuzzer integration</li>
+<li>Introspection aka 'who is dropping my packets':</li>
+<li>Flowtable offload helpers for XDP</li>
+<li>chainloop detection</li>
+</ul>
+<h4>Pablo</h4>
+<ul>
+<li>flowtable</li>
+<li>C test API</li>
+<li>a trip to bugzilla</li>
+<li>pending backlog in patchwork</li>
+<li>register tracking infrastructure: zeroing and coalescing</li>
+<li>Flowtable HW offload + transaction semantics</li>
+<li>(lib)nftables api</li>
+<li>'type ipv4_addr : ct helper' issue</li>
+<li>userspace nft cache for tracing</li>
+</ul>
+  <footer>
+    <!-- <p>Published: <time datetime="2023-09-14T00:00:00+00:00"> -->
+    <!--     Thu 14 September 2023 -->
+    <!--   </time></p> -->
+    <p>
+      <a href="./category/conferences.html">Conferences</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>

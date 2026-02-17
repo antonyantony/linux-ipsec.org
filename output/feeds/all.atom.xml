@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>IPsec and Network Security</title><link href="https://antonyantony.github.io/linux-ipsec.org/" rel="alternate"/><link href="https://antonyantony.github.io/linux-ipsec.org/feeds/all.atom.xml" rel="self"/><id>https://antonyantony.github.io/linux-ipsec.org/</id><updated>2026-02-12T00:00:00+00:00</updated><entry><title>2026 TRex Testing (Frankfurt, 10-12 Feb)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html" rel="alternate"/><published>2026-02-12T00:00:00+00:00</published><updated>2026-02-12T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2026-02-12:/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS&lt;/p&gt;
+&lt;h3&gt;Prerequisites&lt;/h3&gt;
+&lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Operating System:&lt;/strong&gt; Ubuntu 24.04 LTS&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python:&lt;/strong&gt; Python 3.12 (TRex v3.08 is tied to this version)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CPU:&lt;/strong&gt; Multi-core processor with NICs bound to the cores you are using&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Network:&lt;/strong&gt; Tested with Mellanox ConnectX-5 or ConnectX-7&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DOCA-OFED:&lt;/strong&gt; Must match your OS distribution — https://developer.nvidia.com/networking/doca&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;h3&gt;Installing Python 3.12&lt;/h3&gt;
+&lt;p&gt;TRex v3.08 (current as of Feb 2026) requires Python 3.12, which is older than
+what ships with Ubuntu 24.04.&lt;/p&gt;
+&lt;p&gt;Download the Python 3.12 source tarball:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Extract it, run &lt;code&gt;configure&lt;/code&gt;, and install.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;tar&lt;span class="w"&gt; &lt;/span&gt;-zxf&lt;span class="w"&gt; &lt;/span&gt;Python-3.12.9.tgz
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;Python-3.12.9
+./configure&lt;span class="w"&gt; &lt;/span&gt;--enable-optimizations
+make&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;To always use Python 3.12 with TRex, create a virtual environment (one-time setup). After that, activate this venv every time you work with TRex.&lt;/p&gt;
+&lt;p&gt;Run this from &lt;code&gt;/root&lt;/code&gt; or another persistent location:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Activating the Python 3.12 venv&lt;/h3&gt;
+&lt;p&gt;Each time you log in to work with TRex, activate the venv first:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+&lt;span class="c1"&gt;# To verify:&lt;/span&gt;
+&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.12&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# should show /root/venv/bin/python3.12&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Installing DOCA-OFED&lt;/h2&gt;
+&lt;p&gt;For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.&lt;/p&gt;
+&lt;p&gt;Navigate to the &lt;a href="https://developer.nvidia.com/doca-downloads"&gt;DOCA downloads page&lt;/a&gt; and select the local package for your OS.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.2.1/host/doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
+apt-get&lt;span class="w"&gt; &lt;/span&gt;update
+apt-get&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If v3.2.1 is not available for your setup, an earlier release also works:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.0.0/host/doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+apt&lt;span class="w"&gt; &lt;/span&gt;update
+apt&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Downloading TRex&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;--no-check-certificate&lt;span class="w"&gt; &lt;/span&gt;--no-cache&lt;span class="w"&gt; &lt;/span&gt;https://trex-tgn.cisco.com/trex/release/latest
+mv&lt;span class="w"&gt; &lt;/span&gt;latest&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
+tar&lt;span class="w"&gt; &lt;/span&gt;xvf&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
+mv&lt;span class="w"&gt; &lt;/span&gt;v3.08&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# you may need to chmod 777 first&lt;/span&gt;
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08/
+rm&lt;span class="w"&gt;  &lt;/span&gt;so/x86_64/libstdc++.so.6
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# add this to /etc/sysctl.d to make it permanent.&lt;/span&gt;
+chmod&lt;span class="w"&gt; &lt;/span&gt;-R&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;777&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;At the time of writing, &lt;code&gt;latest&lt;/code&gt; pointed to v3.08.&lt;/p&gt;
+&lt;h2&gt;Starting TRex Server&lt;/h2&gt;
+&lt;p&gt;TRex is installed under &lt;code&gt;/var/tmp/trex-v3.08&lt;/code&gt; on the sunset host. The server runs in the foreground, so start it inside a &lt;code&gt;screen&lt;/code&gt; session — that way you can reattach later with &lt;code&gt;screen -x&lt;/code&gt; to check its output.&lt;/p&gt;
+&lt;p&gt;Activate the venv first, then launch &lt;code&gt;screen&lt;/code&gt; and start TRex inside it:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+screen&lt;span class="w"&gt; &lt;/span&gt;bash
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.08
+./t-rex-64&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;--no-scapy&lt;span class="w"&gt; &lt;/span&gt;--cfg&lt;span class="w"&gt; &lt;/span&gt;/etc/trex_cfg.yaml&lt;span class="w"&gt; &lt;/span&gt;-c&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;8&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The server takes a few seconds to initialize.&lt;/p&gt;
+&lt;h3&gt;Running a TRex Test Script&lt;/h3&gt;
+&lt;p&gt;From a second terminal (also inside the Python 3.12 venv), run one of the test scripts. For example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/ietf-123-pcpu/tests-trex
+./u1.py
+./u1.py&lt;span class="w"&gt; &lt;/span&gt;--src-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.1.253&lt;span class="w"&gt; &lt;/span&gt;--dst-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.2.253&lt;span class="w"&gt; &lt;/span&gt;--pps&lt;span class="w"&gt; &lt;/span&gt;1M&lt;span class="w"&gt; &lt;/span&gt;--frame-size&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1518&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--duration&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows-end&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--runs&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;u1.py&lt;/code&gt; is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.&lt;/p&gt;
+&lt;h2&gt;Appendix A: Mellanox DOCA-OFED Diagnostics&lt;/h2&gt;
+&lt;p&gt;This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.&lt;/p&gt;
+&lt;p&gt;After installing DOCA-OFED, run &lt;code&gt;mst start&lt;/code&gt; once. To verify that your NICs are detected, check the output of &lt;code&gt;mst status -v&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Unknown&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;argument&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;--v&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;sunset&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;~/&lt;/span&gt;&lt;span class="n"&gt;ietf&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;123&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pcpu&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tests&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="c1"&gt;# mst status -v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;devices&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="n"&gt;DEVICE_TYPE&lt;/span&gt;&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt;                           &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt;       &lt;/span&gt;&lt;span class="n"&gt;RDMA&lt;/span&gt;&lt;span class="w"&gt;                                               &lt;/span&gt;&lt;span class="n"&gt;NET&lt;/span&gt;&lt;span class="w"&gt;                                     &lt;/span&gt;&lt;span class="n"&gt;NUMA&lt;/span&gt;
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.1&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_1&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redwest&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Appendix B: TRex permission issue&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./t-rex-64 -i -c 4 --cfg /etc/trex_cfg.yaml
+
+    Error: current path is not readable by user &amp;quot;nobody&amp;quot; (starting at /root).
+    Two possible solutions:
+
+    1. (Recommended)
+        Copy TRex to some public location (/tmp or /scratch, assuming it has proper permissions (chmod 777 etc.))
+
+    2. (Not recommended)
+        Change permissions of current path. (Starting from directory /root).
+        chmod 777 /root -R
+
+Could not start scapy daemon server, which is needed by GUI to create packets.
+If you don&amp;#39;t need it, use --no-scapy-server flag.
+ERROR encountered while configuring TRex system
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 TRex Testing (Finland, 20-28 Aug)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html" rel="alternate"/><published>2025-08-28T00:00:00+00:00</published><updated>2025-08-28T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-28:/linux-ipsec.org/2025-trex-testing-finland-20-28-aug.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04 - 25.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) and 25.04 (Plucky Puffin).&lt;/p&gt;
+&lt;h3&gt;Prerequisites&lt;/h3&gt;
+&lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Operating System:&lt;/strong&gt; Ubuntu 24.04 LTS or Ubuntu 25.04&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python:&lt;/strong&gt; Python 3.9 (TRex v3.06 is tied to this version)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;CPU:&lt;/strong&gt; Multi-core processor with NICs bound to the cores you are using&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Network:&lt;/strong&gt; Tested with Mellanox ConnectX-5 or ConnectX-7&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DOCA-OFED:&lt;/strong&gt; Must match your OS distribution — https://developer.nvidia.com/networking/doca&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Installation&lt;/h2&gt;
+&lt;h3&gt;Installing TRex with Python 3.9&lt;/h3&gt;
+&lt;p&gt;For these tests, I used TRex v3.06 (as of July 2025). This version requires an
+older Python runtime (3.8-3.9) than what ships with modern Linux distributions
+such as Ubuntu 25.04.&lt;/p&gt;
+&lt;p&gt;Download the Python 3.9 source tarball:&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;wget https://www.python.org/ftp/python/3.9.13/Python-3.9.13.tgz&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Extract it, run &lt;code&gt;configure&lt;/code&gt;, and install.&lt;/p&gt;
+&lt;p&gt;To always use Python 3.9, create a virtual environment (one-time setup). After that, activate this venv every time you work with TRex.&lt;/p&gt;
+&lt;p&gt;Run this from &lt;code&gt;/root&lt;/code&gt; or another persistent location:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;python3.9&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span&gt;venv&lt;span class="w"&gt; &lt;/span&gt;venv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Log in and activate the Python 3.9 venv&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root
+&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;./venv/bin/activate
+&lt;span class="c1"&gt;# To verify:&lt;/span&gt;
+&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.9&lt;span class="p"&gt;;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;#python3.9 is hashed (/root/venv/bin/python3.9)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;Installing DOCA-OFED&lt;/h2&gt;
+&lt;p&gt;For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.0.0/host/doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+dpkg&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;doca-host_3.0.0-058000-25.04-ubuntu2504_amd64.deb
+apt&lt;span class="w"&gt; &lt;/span&gt;update
+apt&lt;span class="w"&gt; &lt;/span&gt;-y&lt;span class="w"&gt; &lt;/span&gt;install&lt;span class="w"&gt; &lt;/span&gt;doca-ofed
+dkms&lt;span class="w"&gt; &lt;/span&gt;autoinstall
+mst&lt;span class="w"&gt; &lt;/span&gt;start
+mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Downloading TRex&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;--no-check-certificate&lt;span class="w"&gt; &lt;/span&gt;--no-cache&lt;span class="w"&gt; &lt;/span&gt;https://trex-tgn.cisco.com/trex/release/latest
+tar&lt;span class="w"&gt; &lt;/span&gt;xvf&lt;span class="w"&gt; &lt;/span&gt;latest
+mv&lt;span class="w"&gt; &lt;/span&gt;v3.06&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06/
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06/
+git&lt;span class="w"&gt; &lt;/span&gt;init
+git&lt;span class="w"&gt; &lt;/span&gt;add&lt;span class="w"&gt; &lt;/span&gt;.
+git&lt;span class="w"&gt; &lt;/span&gt;commit
+rm&lt;span class="w"&gt;  &lt;/span&gt;so/x86_64/libstdc++.so.6
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;../
+mv&lt;span class="w"&gt; &lt;/span&gt;trex-v3.06&lt;span class="w"&gt; &lt;/span&gt;/var/tmp
+sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# add this to /etc/sysctl.d to make it permanent.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;At the time of writing, &lt;code&gt;latest&lt;/code&gt; pointed to v3.06.&lt;/p&gt;
+&lt;h2&gt;Starting TRex Server&lt;/h2&gt;
+&lt;p&gt;TRex is installed under &lt;code&gt;/var/tmp/trex-v3.06&lt;/code&gt; on the sunset host.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;vm.nr_hugepages&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;2048&lt;/span&gt;
+&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/var/tmp/trex-v3.06
+./t-rex-64&lt;span class="w"&gt; &lt;/span&gt;-i&lt;span class="w"&gt; &lt;/span&gt;--no-scapy&lt;span class="w"&gt; &lt;/span&gt;--cfg&lt;span class="w"&gt; &lt;/span&gt;/etc/trex_cfg.yaml&lt;span class="w"&gt; &lt;/span&gt;-c&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;8&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Start the TRex server once and leave it running in the foreground. I prefer to run it inside a &lt;code&gt;screen&lt;/code&gt; session so you can reattach later with &lt;code&gt;screen -x&lt;/code&gt; to see the output. The server must be started within the Python 3.9 venv.&lt;/p&gt;
+&lt;p&gt;I recommend starting &lt;code&gt;screen bash&lt;/code&gt; from the activated virtual environment, then launching the TRex server inside that screen session.&lt;/p&gt;
+&lt;p&gt;It will take a few seconds to start and will remain running in the foreground.&lt;/p&gt;
+&lt;h3&gt;Running a TRex Test Script&lt;/h3&gt;
+&lt;p&gt;From a second terminal (also inside the Python 3.9 venv), run one of the test scripts. For example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/ietf-123-pcpu/tests-trex
+./u1.py
+./u1.py&lt;span class="w"&gt; &lt;/span&gt;--src-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.1.253&lt;span class="w"&gt; &lt;/span&gt;--dst-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.2.253&lt;span class="w"&gt; &lt;/span&gt;--pps&lt;span class="w"&gt; &lt;/span&gt;1M&lt;span class="w"&gt; &lt;/span&gt;--frame-size&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1518&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--duration&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows-end&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--runs&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;u1.py&lt;/code&gt; is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.&lt;/p&gt;
+&lt;h2&gt;Appendix A: Mellanox DOCA-OFED Diagnostics&lt;/h2&gt;
+&lt;p&gt;This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.&lt;/p&gt;
+&lt;p&gt;After installing DOCA-OFED, run &lt;code&gt;mst start&lt;/code&gt; once. To verify that your NICs are detected, check the output of &lt;code&gt;mst status -v&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;E&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Unknown&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;argument&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;--v&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;root&lt;/span&gt;&lt;span class="err"&gt;@&lt;/span&gt;&lt;span class="n"&gt;sunset&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;~/&lt;/span&gt;&lt;span class="n"&gt;ietf&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;123&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;pcpu&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tests&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="c1"&gt;# mst status -v&lt;/span&gt;
+&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;modules&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="ow"&gt;not&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;configuration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;module&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;loaded&lt;/span&gt;
+&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;devices&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="o"&gt;------------&lt;/span&gt;
+&lt;span class="n"&gt;DEVICE_TYPE&lt;/span&gt;&lt;span class="w"&gt;             &lt;/span&gt;&lt;span class="n"&gt;MST&lt;/span&gt;&lt;span class="w"&gt;                           &lt;/span&gt;&lt;span class="n"&gt;PCI&lt;/span&gt;&lt;span class="w"&gt;       &lt;/span&gt;&lt;span class="n"&gt;RDMA&lt;/span&gt;&lt;span class="w"&gt;                                               &lt;/span&gt;&lt;span class="n"&gt;NET&lt;/span&gt;&lt;span class="w"&gt;                                     &lt;/span&gt;&lt;span class="n"&gt;NUMA&lt;/span&gt;
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.1&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_1&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redwest&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+
+&lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html" rel="alternate"/><published>2025-08-15T00:00:00+00:00</published><updated>2025-08-15T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-15:/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html</id><summary type="html">&lt;p&gt;Test performance improvements using pPCPU &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt; with the Linux Kernel and strongSwan pCPU implementation.&lt;/p&gt;</summary><content type="html">&lt;p&gt;The testing started as part of IETF 123 Hackathon and continued since then.&lt;/p&gt;
+&lt;h2&gt;Test setup&lt;/h2&gt;
+&lt;p&gt;The initial test setup have four hosts or servers. Here, &lt;em&gt;west&lt;/em&gt; and &lt;em&gt;east&lt;/em&gt; function as IPsec gateways, also known as black servers. Meanwhile, &lt;em&gt;sunseti&lt;/em&gt; and &lt;em&gt;sunrise&lt;/em&gt; act as traffic generators or receivers, referred to as red servers.&lt;/p&gt;
+&lt;pre&gt;
+| sunset |-----| west |====| east |----| sunrise |
+&lt;/pre&gt;
+
+&lt;p&gt;Figure: Initial topology&lt;/p&gt;
+&lt;h3&gt;Test hosts specification : 4 hosts&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Supermicro H13SSW Motherboard&lt;/li&gt;
+&lt;li&gt;AMD EPYC 9135 16-Core Processor (a.k.a. Bergamo, or Zen 5)&lt;/li&gt;
+&lt;li&gt;NIC: Mellanox MT28800 ConnectX-5 Ex (100Gbps NIc)&lt;/li&gt;
+&lt;li&gt;NIC: Broadcom BCM57508 NetXtreme-E (only on sunrise, 100Gbps NIc)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Test Results&lt;/h2&gt;
+&lt;h3&gt;TREX pCPU UDP Results (2025-07-28)&lt;/h3&gt;
+&lt;p&gt;In this test, west and east are IPsec gateways, and sunset is running &lt;a href="https://trex-tgn.cisco.com/trex/doc/trex_appendix_mellanox.html"&gt;TRex&lt;/a&gt; traffic generator. It sends on one port while receiving the traffic on the second port, on the same host.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="TREX pCPU UDP Results" src="https://antonyantony.github.io/linux-ipsec.org/images/20250728-trex-pcpu-udp.png"&gt;
+&lt;em&gt;Figure: UDP performance with pCPU (2025-07-28)&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Each flow is 3.3Gbps. The &lt;a href="https://trex-tgn.cisco.com"&gt;TRex&lt;/a&gt; on sunset sends the traffic to west, which is an IPsec gateway that encrypts the traffic and forwards it to the second IPsec gateway, east. East decrypts the IPsec and sends it back to sunset. Sunset receives it on the second interface. The results clearly show total IPsec throughput increases linearly with the number of flows. Each flow is pinned to each CPU. Adding CPU increases the IPsec throughput as expected in &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt;.&lt;/p&gt;
+&lt;pre&gt;
+ +-&lt;&lt;&lt;---| sunset |-------+
+ |                        |
+ +--| west |====| east |--+
+&lt;/pre&gt;
+&lt;p&gt;Figure: TRex IPsec test topology&lt;/p&gt;
+&lt;h3&gt;TREX Loop Test Results (2025-08-15)&lt;/h3&gt;
+&lt;p&gt;This test uses a loopback (also called cross-connect) setup with only one host, sunset. It checks how fast the &lt;a href="https://trex-tgn.cisco.com"&gt;TRex&lt;/a&gt; traffic generator can send and receive data without involving Linux packet forwarding. The results show the maximum speed you can expect before adding IPsec gateways.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="TREX Loop Test Results" src="https://antonyantony.github.io/linux-ipsec.org/images/20250815-trex-loop-test.png"&gt;
+&lt;em&gt;Figure: Loop test results (2025-08-15)&lt;/em&gt;&lt;/p&gt;
+&lt;pre&gt;
+ +--&lt;&lt;&lt;---| sunset |-------+
+ |                         |
+ +-------------------------+
+&lt;/pre&gt;
+&lt;p&gt;Figure: TRex loopback test topology&lt;/p&gt;
+&lt;h2&gt;Future work: Linux contention analysis&lt;/h2&gt;
+&lt;p&gt;We use the Linux profiling tool &lt;a href="https://perfwiki.github.io/main"&gt;perf&lt;/a&gt; to identify contention points. The following examples from IPsec sender.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;amp;y=341"&gt;xfrm_state_find()&lt;/a&gt; contention.&lt;/h3&gt;
+&lt;p&gt;When using pCPU i.e. multiple CPU looking up state, even with states cached on policy there is CPU contention. You can see this in perf output as well as in Flamegrah clearly.
+This is a known limitation of the Linux XFRM (IPsec) implementation. We hope to resolve this issue and hope to fix the contention in a future update.
+&lt;img alt="Flamegraph xfrm_state_find()" src="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg"&gt;
+&lt;em&gt;Figure: Falmegraph xfrm_state_find&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The function &lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=405.3&amp;amp;y=341"&gt;xfrm_state_find()&lt;/a&gt;. For more details on Flamegraphs, refer to &lt;a href="https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html"&gt;Brendan Gregg's page&lt;/a&gt;. Is called on each sending cpu on &lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/images/20250727-dcache_miss_flamegraph-xfrm_state_find.svg?x=543.5&amp;amp;y=373"&gt;_raw_spin_lock_bh()&lt;/a&gt; contention.&lt;/h3&gt;
+&lt;p&gt;This contention appears on sending side and _raw_spin_lock_bh() called in transmit path. &lt;/p&gt;
+&lt;h4&gt;Example of perf commandline.&lt;/h4&gt;
+&lt;p&gt;This records perf counters on CPU 1, which we identified as sending CPU on west.&lt;/p&gt;
+&lt;pre&gt;
+perf record -b -e cycles,L1-dcache-load-misses,L1-icache-load-misses:k -g -C 5 --call-graph dwarf
+perf report -g
+&lt;/pre&gt;
+
+&lt;h2&gt;Scripts to Tune the System&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/set-irq-affinity.sh"&gt;set-irq-affinity.sh&lt;/a&gt;
+   This script optimizes packet processing by preventing &lt;code&gt;skb_free&lt;/code&gt; from being handled by a different CPU when using a Mellanox ConnectX NIC. By configuring RSS (Receive Side Scaling), it ensures that the same CPU manages  both packet processing and freeing, particularly enhancing performance when pCPU affinity is enabled, and multiple CPUs are in use. Execute this script on each network interface, for red and black interface.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/west/west-black.sh"&gt;Flow pinning on black interface&lt;/a&gt;
+   Use this script to pin ESP-in-UDP traffic flows across different CPUs on a Linux system, based on UDP soruce port.. Run this script on the IPsec gateway ,east and west, black NICs.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/202507-madrid-pcpu-testing/west/west-red-udp.sh"&gt;Flow pinning on red interface&lt;/a&gt;
+   This script is intended to distribute red traffic across several CPUs, allowing efficient pCPU utilization for sending. It should be run on the IPsec gateway, specifically on the west in your scenario. For bi-directional traffic, execute this on both IPsec gateways for the black interface.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;For future work&lt;/h2&gt;
+&lt;p&gt;Ensure CPUs used for networking, IPsec data path, are isolated from general-purpose tasks (&lt;code&gt;isolcpus&lt;/code&gt; kernel boot option). - Use high-resolution network and CPU measurements (&lt;code&gt;nstat&lt;/code&gt;, &lt;code&gt;mpstat -P ALL 1&lt;/code&gt;, etc.).  Monitor for dropped packets and IRQ balancing using &lt;code&gt;ethtool -S&lt;/code&gt; and &lt;code&gt;irqbalance&lt;/code&gt; status.&lt;/p&gt;
+&lt;h3&gt;check if Ethernet is pausing.&lt;/h3&gt;
+&lt;pre&gt;
+ethtool --include-statistics -a  black
+Pause parameters for black:
+Autonegotiate:  off
+RX:     on
+TX:     on
+Statistics:
+  tx_pause_frames: 0
+  rx_pause_frames: 10542401
+&lt;/pre&gt;</content><category term="research"/></entry><entry><title>2025 Linux IPsec workshop, Madrid (17 - 18 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-workshop-madrid-17-18-july.html" rel="alternate"/><published>2025-07-19T00:00:00+00:00</published><updated>2025-07-19T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-07-19:/linux-ipsec.org/2025-linux-ipsec-workshop-madrid-17-18-july.html</id><summary type="html">&lt;p&gt;The 2025 Linux IPsec workshop took place on July 17th - 18th in Madrid, directly before the IETF Meeting 123.&lt;/p&gt;</summary><content type="html">&lt;p&gt;The 2025 Linux IPsec workshop was held on July 17th - 18th in the scorching hot Madrid,
+directly before the IETF Meeting 123.
+The workshop began on thrusday morning with the welcome speech by Steffen Klassert, who organized the event.&lt;/p&gt;
+&lt;h2&gt;Presentation Notes and Slides&lt;/h2&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/brunner-strongswan-developments.pdf"&gt;Recent Developments in strongSwan&lt;/a&gt; by Tobias Brunner&lt;/h3&gt;
+&lt;p&gt;Tobias presented an overview of new features added in recent strongSwan releases.&lt;/p&gt;
+&lt;p&gt;These new features include:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Narrowing with Trap Policies&lt;/li&gt;
+&lt;li&gt;Per-CPU SAs&lt;/li&gt;
+&lt;li&gt;AGGFRAG Mode&lt;/li&gt;
+&lt;li&gt;Regular Expressions&lt;/li&gt;
+&lt;li&gt;EAP-Identity Matching&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/steffen-pqc-auth-for-ikev2.pdf"&gt;IKEv2 Signature Authentication using ML-DSA&lt;/a&gt; by Andreas Steffen&lt;/h3&gt;
+&lt;p&gt;Andreas presented about the current state of the PQC authentication standards, such as ML-DSA, SLH-DSA and FN-DSA. The presentation included the preliminary strongSwan implementation of IKEv2 signature authentication using ML-DSA.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/smyslov-g-ikev2.pdf"&gt;Group IPsec SAs and key management&lt;/a&gt; by Valery Smyslov&lt;/h3&gt;
+&lt;p&gt;Valery presented about securing IP multicast using G-IKEv2.
+The G-IKEv2 document has been in development for more than 15 years, and is expeted to be published as an RFC soon.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/soini-handling-ipsec-with-foomuuri.pdf"&gt;Handling IPsec traffic with nftables based firewall&lt;/a&gt; by Tuomo Soini&lt;/h3&gt;
+&lt;p&gt;Tuomo gave a presentation about a recent nftables firewall project, Foomuuri. The main focus of the presentation was on how IPsec secured traffic is handled in Foomuuri.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/richardson-whatsacp.pdf"&gt;The Autonomic Control Plane (ACP)&lt;/a&gt; and &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/richardson-minerva.pdf"&gt;Minerva Connect&lt;/a&gt; by Michael Richardson&lt;/h3&gt;
+&lt;p&gt;Michael held a presentation about the Autonomic Control Plane (ACP).
+The presentation included some basics of ACP, as well as some insights to Michael's solution called Minerva.
+The architecture and challenges in implementation were discussed.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/soini-enterprise-networking-with-ipsec-and-dynamic-routing.pdf"&gt;Enterprise Networking with IPsec and Dynamic Routing&lt;/a&gt; by Simo Soini&lt;/h3&gt;
+&lt;p&gt;Simo presented his plans for an experiment on enterprise networking using IPsec for securing the traffic and dynamic routing between tunnels.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/tschofenig-jansen-ipsec-performance-test.pdf"&gt;IPsec Performance Tests&lt;/a&gt; by Hannes Tschofenig and Kai Jansen&lt;/h3&gt;
+&lt;p&gt;Hannes and Kai presented their IPsec performance tests with strongSwan and two 100GB Mellanox NICs.
+The discussion about the results and IPsec performance optimization in general continued during the IETF 123 Hackathon.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/migault-diet-esp.pdf"&gt;Diet-ESP and Integration of IPsec&lt;/a&gt; by Daniel Migault&lt;/h3&gt;
+&lt;p&gt;Daniel presented SeCPRI, an IPsec based security layer for eCPRI, which uses Diet-ESP for compressing the encrypted messages.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/klassert-enhanced-esp.pdf"&gt;Enhanced ESP&lt;/a&gt; by Steffen Klassert&lt;/h3&gt;
+&lt;p&gt;Steffen presented an overview about the EESP protocol design.
+There was a lot of discussion concerning the requirements and specifics of the protocol.&lt;/p&gt;
+&lt;p&gt;Related links:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://netdevconf.info/0x18/docs/netdev-0x18-paper43-talk-slides/Introduction%20to%20Falcon%20Reliable%20Transport.pdf"&gt;Google's reason for telemetry use case for crypto offset&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/brunner-eesp-ikev2.pdf"&gt;IKEv2 negotiation for EESP&lt;/a&gt; by Tobias Brunner&lt;/h3&gt;
+&lt;p&gt;The second presentation by Tobias was about IKEv2 negotiation for the EESP protocol Steffen Klassert presented about.
+The focus was on the slight differences between negotiation for ESP versus EESP.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/xialiang-eesp-stateless-encryption.pdf"&gt;EESP Stateless Encryption Scheme&lt;/a&gt; by Frank Xialiang&lt;/h3&gt;
+&lt;h3&gt;Industry Trends in HPC/AI workloads and ESP-like Protocols by Anthony Anthony&lt;/h3&gt;
+&lt;p&gt;Anthony gave an overview about industry trends in high-performance computing and AI.&lt;/p&gt;
+&lt;p&gt;Related links:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://netdevconf.info/0x18/docs/netdev-0x18-paper43-talk-slides/Introduction%20to%20Falcon%20Reliable%20Transport.pdf"&gt;Netdev 0x18 Falcon Talk 2024&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ultraethernet.org/wp-content/uploads/sites/20/2025/06/UE-Specification-6.11.25.pdf"&gt;UET Specification 1.0 June 2025&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://netdevconf.info/0x19/sessions/bof/networking-for-ai-bof.html"&gt;AI Networking Summary Netdev 0x19&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/smyslov-stateless-encryption.pdf"&gt;Stateless encryption&lt;/a&gt; by Valery Smyslov&lt;/h3&gt;
+&lt;p&gt;Valery's second presentation was about stateless encryption,
+and more specifically about how much security can be sacrificed in favor of performance.&lt;/p&gt;
+&lt;h3&gt;Linux XFRM Code Path by Anthony Anthony&lt;/h3&gt;
+&lt;p&gt;Anthony gave a presentation about the XFRM code in Linux kernel.
+The XFRM code is challenging to understand by just reading the code, and this started some fruitful conversation about how to better understand and learn this code.
+Inspired by this discussion, Christian Hopps gave a short demonstration about semantic code navigation using Language Servers.
+Language servers can communicate with code editors (such as Emacs, Neovim or VSCode) using language server protocol.&lt;/p&gt;
+&lt;p&gt;Related links:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://www.usenix.org/conference/atc25/presentation/berger"&gt;Keynote from Usenix-25/OSDI 25&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;IPsec Interoperability discussion by Michael Richardson&lt;/h3&gt;
+&lt;p&gt;Michael lead a discussion about interoperability between different IPsec implementations.
+There was an idea about an event for testing interoperability between as many IPsec implementations as possible.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2025/kivinen-handling-fragments.pdf"&gt;Handling fragments&lt;/a&gt; by Tero Kivinen&lt;/h3&gt;
+&lt;p&gt;Tero presented about handling incoming fragments in IPsec, and the three methods for this as listed in &lt;a href="https://datatracker.ietf.org/doc/html/rfc4301"&gt;RFC4301&lt;/a&gt;.&lt;/p&gt;
+&lt;h3&gt;Future of the IPsec Workshop and Closing by Steffen Klassert&lt;/h3&gt;
+&lt;p&gt;The 2025 IPsec Workshop was finished with some final words about the workshop and it's future from the organizer, Steffen Klassert. Huge thanks to Steffen for organizing the workshop, and to everyone who attended!&lt;/p&gt;</content><category term="conferences"/></entry><entry><title>2024 Linux IPsec workshop, Santa Clara (15 - 16 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2024-linux-ipsec-workshop-santa-clara-15-16-july.html" rel="alternate"/><published>2024-07-16T00:00:00+00:00</published><updated>2024-07-16T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2024-07-16:/linux-ipsec.org/2024-linux-ipsec-workshop-santa-clara-15-16-july.html</id><summary type="html">&lt;p&gt;The 2024 Linux IPsec workshop was held 15 - 16 July in Santa Clara, California, colocated with the Netdev 0x18 conference.&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Topics&lt;/h2&gt;
+&lt;h3&gt;Steffen&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;ESP problem statement&lt;/li&gt;
+&lt;li&gt;Wrapped ESP v2&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://datatracker.ietf.org/doc/draft-klassert-ipsecme-wespv2/"&gt;https://datatracker.ietf.org/doc/draft-klassert-ipsecme-wespv2/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;(PSP)&lt;/li&gt;
+&lt;li&gt;Combined Tunnel-Interfaces (e.g. xfrm and gre/vxlan)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Chris Hopps&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;IP-TFS Update&lt;/li&gt;
+&lt;li&gt;IP-TFS Upcoming Work (constant send rate w/ congestion control)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Yan Yan&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Android Kernel Networking Unit Tests (30 min.)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Feng Wang&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;XFRM interface identifier in packet offload mode (30 min.)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Antony&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Encrypted ESP Ping&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://datatracker.ietf.org/doc/draft-antony-ipsecme-encrypted-esp-ping/"&gt;https://datatracker.ietf.org/doc/draft-antony-ipsecme-encrypted-esp-ping/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Notes&lt;/h2&gt;
+&lt;p&gt;Android Kernel Networking Unit Tests example: &lt;a href="https://android-review.googlesource.com/c/kernel/tests/+/1668886"&gt;https://android-review.googlesource.com/c/kernel/tests/+/1668886&lt;/a&gt;
+&lt;a href="https://lore.kernel.org/netdev/20220119000014.1745223-2-evitayan@google.com/"&gt;https://lore.kernel.org/netdev/20220119000014.1745223-2-evitayan@google.com/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Packet spraying, Falcon: use multiple paths out of order receiing is ok. e.g  matrices data like that&lt;/p&gt;
+&lt;h3&gt;Notes from the PSP + WESPv2 Talks on Tuesday morning&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Widely deplayed.&lt;/li&gt;
+&lt;li&gt;10M+ connections&lt;/li&gt;
+&lt;li&gt;100K+ connections/sec can be established&lt;/li&gt;
+&lt;li&gt;100usec key derivation&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Mutltipath &lt;/p&gt;
+&lt;p&gt;No state of SA in the NIC., a.k.a. no SADB, no state.&lt;/p&gt;
+&lt;p&gt;Cryptoffset &lt;/p&gt;
+&lt;p&gt;Outer UDP DST is not used for RSS entropy&lt;/p&gt;
+&lt;p&gt;Outer UDP SRC port used for entropy/ECMP : source avoids well known ports.&lt;/p&gt;
+&lt;p&gt;Fixed offset: pointed &lt;/p&gt;
+&lt;p&gt;sample active probe&lt;/p&gt;
+&lt;p&gt;Version (4 bits):  algorithms in every packet  because stateless decrypting&lt;/p&gt;
+&lt;p&gt;KDF: NIST adversied function&lt;/p&gt;
+&lt;p&gt;200 M/sec key derivattion &lt;/p&gt;
+&lt;p&gt;TX:  Key comes from the socket. Not stored in the NIC&lt;/p&gt;
+&lt;p&gt;Device keys:  spi 0 and 1&lt;/p&gt;
+&lt;p&gt;Rekey is time bytes. &lt;/p&gt;
+&lt;p&gt;IV is time on the device, from PTP clock. &lt;/p&gt;
+&lt;p&gt;WESPv2
+* need to be fixed offset hardware parsable fields&lt;/p&gt;
+&lt;p&gt;Flow identfier: Hardware flags need to be at a fixed location.&lt;/p&gt;
+&lt;p&gt;Crypt offset: only need L3 header a d not intented expose user payload&lt;/p&gt;</content><category term="conferences"/></entry><entry><title>2023 Linux IPsec/Netfilter workshop, Dresden (11 - 14 September)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2023-linux-ipsecnetfilter-workshop-dresden-11-14-september.html" rel="alternate"/><published>2023-09-14T00:00:00+00:00</published><updated>2023-09-14T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2023-09-14:/linux-ipsec.org/2023-linux-ipsecnetfilter-workshop-dresden-11-14-september.html</id><summary type="html">&lt;p&gt;The 2023 Linux IPsec/Netfilter workshop took place 11 - 14 September in Dresden, Germany.&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Topics&lt;/h2&gt;
+&lt;h3&gt;IPsec&lt;/h3&gt;
+&lt;h4&gt;Nathan&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;Intro and update on IPsec in Android&lt;/li&gt;
+&lt;li&gt;Challenges and learnings from IPsec commercialization on mobile (power, performance, and reliability)&lt;ul&gt;
+&lt;li&gt;Replay window issues esp on cellular&lt;/li&gt;
+&lt;li&gt;Keepalive power issues and possible alternatives?&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Improving IPv6 ESP support (problem statements, current thoughts, brainstorming w/ the group on each)&lt;ul&gt;
+&lt;li&gt;ESP ping&lt;/li&gt;
+&lt;li&gt;ESP keepalive&lt;/li&gt;
+&lt;li&gt;Flow labels performance &amp;amp; privacy&lt;/li&gt;
+&lt;li&gt;DSCP performance &amp;amp; privacy&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Compatibility and signalling&lt;ul&gt;
+&lt;li&gt;Dynamic update problems&lt;/li&gt;
+&lt;li&gt;MOBIKE and UDP encap (incl dynamic encap+non-encap receive)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4&gt;Tobias&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Future of strongSwan's high-availability solution and patches for CLUSTERIP now that the latter has been removed from the kernel.&lt;/li&gt;
+&lt;li&gt;XFRM_MSG_MIGRATE vs. strongSwan, change the current command or add new one(s)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Andreas&lt;/h4&gt;
+&lt;p&gt;X.509 Certificate [Re-]Enrollment using stronsSwan pki tool&lt;/p&gt;
+&lt;h4&gt;Steffen&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;ESP protocol problems&lt;/li&gt;
+&lt;li&gt;NFT/xfrm packet bulking infrastructure (with Pablo)&lt;/li&gt;
+&lt;li&gt;Socket policies&lt;/li&gt;
+&lt;li&gt;What is needed for an IPsec reference implementation&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Pablo&lt;/h4&gt;
+&lt;p&gt;NFT ﬂowtable forwarding fast path (with Steffen)&lt;/p&gt;
+&lt;h4&gt;Thomas&lt;/h4&gt;
+&lt;p&gt;Implications of NAT-mapping changes with high line speeds. &lt;/p&gt;
+&lt;h4&gt;Chris&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Quick intro to IP-TFS if needed    &lt;/li&gt;
+&lt;li&gt;IPTFS Linux xfrm implementation.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Anthony&lt;/h4&gt;
+&lt;p&gt;ESPPing Encrypted: how send and receive on Linux (I guess tangential to Nathan's ESPPing and ESPKeep alive).&lt;/p&gt;
+&lt;p&gt;Depreciating Unsed xfrm/ipsec features PF_KEY, UDP_ENCAP_ESPINUDP_NON_IKE
+- Are there more you would like to Depreciate?&lt;/p&gt;
+&lt;p&gt;Merging pCPU to Kernel : minimal recap on Technology. More on can merge this sooner than later in Linux Kerenel. To catch up on tech details 
+- &lt;a href="https://datatracker.ietf.org/doc/draft-ietf-ipsecme-multi-sa-performance/"&gt;https://datatracker.ietf.org/doc/draft-ietf-ipsecme-multi-sa-performance/&lt;/a&gt;
+- &lt;a href="https://datatracker.ietf.org/meeting/110/materials/slides-110-ipsecme-ikev2-multi-sa-performance-00"&gt;https://datatracker.ietf.org/meeting/110/materials/slides-110-ipsecme-ikev2-multi-sa-performance-00&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;BEET Mode (Trying bring new Internet Draft to IETF 118, Nov 2023) : details from initial version of the document)&lt;/p&gt;
+&lt;h3&gt;Netfilter&lt;/h3&gt;
+&lt;h4&gt;Daniel&lt;/h4&gt;
+&lt;p&gt;bpf+netfilter integration&lt;/p&gt;
+&lt;h4&gt;Quentin&lt;/h4&gt;
+&lt;p&gt;bpfilter, and its relation to iptables and nftables.&lt;/p&gt;
+&lt;h4&gt;Florian&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;Bridge Netfilter+conntrack: Conntrack race conditions with L2 (conntrack-on-bridge)&lt;/li&gt;
+&lt;li&gt;Various problems with netfilter and nftables in kernel and userspace&lt;/li&gt;
+&lt;li&gt;nftables fuzzer integration&lt;/li&gt;
+&lt;li&gt;Introspection aka 'who is dropping my packets':&lt;/li&gt;
+&lt;li&gt;Flowtable offload helpers for XDP&lt;/li&gt;
+&lt;li&gt;chainloop detection&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4&gt;Pablo&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;flowtable&lt;/li&gt;
+&lt;li&gt;C test API&lt;/li&gt;
+&lt;li&gt;a trip to bugzilla&lt;/li&gt;
+&lt;li&gt;pending backlog in patchwork&lt;/li&gt;
+&lt;li&gt;register tracking infrastructure: zeroing and coalescing&lt;/li&gt;
+&lt;li&gt;Flowtable HW offload + transaction semantics&lt;/li&gt;
+&lt;li&gt;(lib)nftables api&lt;/li&gt;
+&lt;li&gt;'type ipv4_addr : ct helper' issue&lt;/li&gt;
+&lt;li&gt;userspace nft cache for tracing&lt;/li&gt;
+&lt;/ul&gt;</content><category term="conferences"/></entry><entry><title>2022 Linux IPsec workshop, London (3 - 5 November)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2022-linux-ipsec-workshop-london-3-5-november.html" rel="alternate"/><published>2022-11-05T00:00:00+00:00</published><updated>2022-11-05T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2022-11-05:/linux-ipsec.org/2022-linux-ipsec-workshop-london-3-5-november.html</id><summary type="html">&lt;p&gt;The 2022 Linux IPsec workshop took place from 3 - 5 November, right before IETF 115 in London, UK.&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Workshop Notes&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;AES-GCM in combination with ESN is NIST compient! There is a packet limit for 4 byte ICVs with aes-gcm 2^32 packets.&lt;/li&gt;
+&lt;li&gt;Now, discussion about rekey timers: time SA ﬁrst used, and recently added, time SA last used. Much discussion about who should do what: Kernel vs IKE and which criteria for notifications. Maybe we need an eBPF hook in the statistics hook.&lt;/li&gt;
+&lt;li&gt;Article on nftable flow-offload &lt;a href="https://thermalcircle.de/doku.php?id=blog:linux:flowtables_1_a_netfilter_nftables_fastpath"&gt;https://thermalcircle.de/doku.php?id=blog:linux:flowtables_1_a_netfilter_nftables_fastpath&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Banana Pi hardware support nftable offload.&lt;/li&gt;
+&lt;li&gt;pCPU Draft: Fallback SA violates IPsec architectural document: One SA is more special than the other SA. Remove this requirement fallback SA.&lt;ul&gt;
+&lt;li&gt;CH: reconsider lock less hand off a packet to another cpu. would solvefallback SA.&lt;/li&gt;
+&lt;li&gt;CH: Use one cpu as sorter to distribute packet.&lt;/li&gt;
+&lt;li&gt;TK: Steady state all necessary cpus should have the SA. Optimize for that.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;BEET mode draft: Mention fragmentation issue. One solution is reassemble the ipv4 packet before encapsulation ike negotiation should say ﬁnal narrowed TSi and TSr should one host ie. /32 and /128&lt;/li&gt;
+&lt;li&gt;Mellanox driver put the packet data next to descriptor. when you fetch descriptor you get 64 bytes prefetched.&lt;/li&gt;
+&lt;li&gt;ESPING: using tfs as aliveness check. TFS if it support constant bitrate, then in a "burst-mode" variation using a very slow constant bit rate tunnel with congestion control enabled gets you a liveness check but with on demand operation. Intial patchset would not support constant bit rate or burst mode.&lt;/li&gt;
+&lt;li&gt;IPV4 can unconditionally set DF bit on the ESP4 packet. It is deﬁned in IPsec architectural documents.&lt;/li&gt;
+&lt;li&gt;Pablo's patch set to &lt;a href="https://lwn.net/Articles/746776/"&gt;https://lwn.net/Articles/746776/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><category term="conferences"/></entry><entry><title>2020 Linux IPsec workshop, Virtual (13 &amp; 20 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2020-linux-ipsec-workshop-virtual-13-20-july.html" rel="alternate"/><published>2020-07-20T00:00:00+00:00</published><updated>2020-07-20T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2020-07-20:/linux-ipsec.org/2020-linux-ipsec-workshop-virtual-13-20-july.html</id><summary type="html">&lt;p&gt;The 2020 Linux IPsec workshop was held virtually 13 and 20 July.&lt;/p&gt;</summary><content type="html">&lt;ul&gt;
+&lt;li&gt;About the Challenges of Running Software ESP in Data Centers&lt;/li&gt;
+&lt;li&gt;Full offload IPsec&lt;/li&gt;
+&lt;li&gt;Crypto offload on ConnectX-6Dx&lt;/li&gt;
+&lt;/ul&gt;</content><category term="conferences"/></entry><entry><title>2019 Linux IPsec workshop, Prague (18 - 20 March)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2019-linux-ipsec-workshop-prague-18-20-march.html" rel="alternate"/><published>2019-03-20T00:00:00+00:00</published><updated>2019-03-20T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2019-03-20:/linux-ipsec.org/2019-linux-ipsec-workshop-prague-18-20-march.html</id><summary type="html">&lt;p&gt;The 2019 Linux IPsec workshop was held 18 - 20 March in Prague, Czech Republic, just before Netdev 0x13.&lt;/p&gt;</summary><content type="html">&lt;ul&gt;
+&lt;li&gt;Recap IPsec workshop 2018&lt;/li&gt;
+&lt;li&gt;xfrm policy database&lt;/li&gt;
+&lt;li&gt;IPsec full-offload&lt;/li&gt;
+&lt;li&gt;Offloading the policy database into hardware&lt;/li&gt;
+&lt;li&gt;post-quantum crypto for IKEv2&lt;/li&gt;
+&lt;li&gt;Foundation meeting of the ‘IPsec and Network Security e.V.’&lt;/li&gt;
+&lt;li&gt;Bonus adhoc kernel debugging section&lt;/li&gt;
+&lt;li&gt;IPsec tunnel-mode integration in Android&lt;/li&gt;
+&lt;li&gt;ESP over TCP (rfc8229)&lt;ul&gt;
+&lt;li&gt;netlink attribute for tcp encap on xfrm states: XFRMA_ENCAP (like for udp)&lt;/li&gt;
+&lt;li&gt;IKETCP prefix: sent by userspace before enabling TCP_ULP (connect() side), received by userspace (accept() socket) before enabling TCP_ULP&lt;/li&gt;
+&lt;li&gt;non-ESP marker: will be passed to/from userspace (contrary to what the slides say). consistent with UDP encap behavior. kernel adds/strips the 2-byte length prefix to each IKE message.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;open questions&lt;ul&gt;
+&lt;li&gt;delete states then close socket, or close socket then delete states?&lt;/li&gt;
+&lt;li&gt;TCP queue tuning and congestion control&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Integrating IPsec and XDP&lt;/li&gt;
+&lt;li&gt;IPsec performance (Steffen Klassert)&lt;/li&gt;
+&lt;li&gt;Flow cache replacement (Florian Westphal)&lt;/li&gt;
+&lt;li&gt;Fastpath for IPsec gateways using the flowtable infrastructure&lt;/li&gt;
+&lt;li&gt;libreswan items/wish list and experienes with XFRMi&lt;/li&gt;
+&lt;li&gt;Configuring the OS native IPSec stack from Python. What could go wrong?&lt;/li&gt;
+&lt;li&gt;Implicit IV / ESP Header Compression&lt;/li&gt;
+&lt;li&gt;IPsec with listified GRO&lt;/li&gt;
+&lt;/ul&gt;</content><category term="conferences"/></entry><entry><title>2018 Linux IPsec workshop, Dresden (26 - 28 March)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2018-linux-ipsec-workshop-dresden-26-28-march.html" rel="alternate"/><published>2018-03-28T00:00:00+00:00</published><updated>2018-03-28T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2018-03-28:/linux-ipsec.org/2018-linux-ipsec-workshop-dresden-26-28-march.html</id><summary type="html">&lt;p&gt;The first Linux IPsec workshop was held 26 - 28 March 2018 in Dresden, Germany as a standalone event.&lt;/p&gt;</summary><content type="html">&lt;h3&gt;From the Libreswan Team:&lt;/h3&gt;
+&lt;p&gt;The Linux IPsec Summit has been very important to us in getting to know the kernel developers and to exchange information about features, use cases and limitations. We got a much better understanding of the kernel’s view of the IPsec/XFRM subsystem and already have some ideas on how we can improve the userland and use some of the XFRM features to the benefit of our users. We also got to share the typical use cases of our users to the kernel developers, so they have a better idea of how we use their code.&lt;/p&gt;
+&lt;p&gt;We had great conversations with the strongswan and android people about the IKE protocol and its oddities. We also learned a lot from the hardware people and how we can better use the support they are providing with XFRM.&lt;/p&gt;
+&lt;p&gt;Getting to know the faces behind the email addresses has given us more confidence to send contributions and work more closely with the XFRM and netfilter community.&lt;/p&gt;
+&lt;p&gt;Many thanks to Steffen Klassert and Secunet for arranging this IPsec
+summit and thanks to all the developers that attended!&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Paul, Antony and Tuomo&lt;/em&gt;&lt;/p&gt;
+&lt;h2&gt;Presentation Notes and Slides&lt;/h2&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/xfrm_interfaces-SK.pdf"&gt;Virtual xfrm interfaces&lt;/a&gt; by Steffen Klassert, secunet Security Networks AG&lt;/h3&gt;
+&lt;p&gt;Steffen presented about a new approach for virtual xfrm (IPsec) interfaces to overcome the design limitations of the VTI interfaces. Some of the disadvantages of VTI interfaces are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;VTI interfaces are L3 tunnels with configurable endpoints, but the tunnel endpoints are already determined by the IPsec SA. So it does not make much sense to configure tunnel endpoints at a VTI too.&lt;/li&gt;
+&lt;li&gt;We need separate interfaces for IPv4 and IPv6 tunnels.&lt;/li&gt;
+&lt;li&gt;We can have only one VTI with wildcard tunnel endpoints.&lt;/li&gt;
+&lt;li&gt;VTI works just with tunnel mode SAs.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;To overcome these issues a new design for XFRM interfaces  was
+proposed:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Should be a virtual interface that ensures IPsec transformation.&lt;/li&gt;
+&lt;li&gt;No limitation on xfrm_mode (tunnel, transport and beet).&lt;/li&gt;
+&lt;li&gt;Should be possible to create multiple interfaces (e.g. to move to different namespaces).&lt;/li&gt;
+&lt;li&gt;Interfaces should be configured with an interface ID that must match a (new) policy/SA lookup key.&lt;/li&gt;
+&lt;li&gt;Should be possible to tunnel IPv4 and IPv6 through the same interface.&lt;/li&gt;
+&lt;li&gt;Should be possible to use IPsec hardware offloads of the underlying interface.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;RFC code that implements this was published before the workshop: &lt;a href="https://git.kernel.org/pub/scm/linux/kernel/git/klassert/linux-stk.git/log/?h=ipsec-next-xfrmi2"&gt;https://git.kernel.org/pub/scm/linux/kernel/git/klassert/linux-stk.git/log/?h=ipsec-next-xfrmi2&lt;/a&gt; This code was reviewed and tested during the workshop. People agreed to continue this approach and to do more testing and review after the workshop.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/xfrmi_usecase_lrk-CL.pdf"&gt;Usecase and Requirements for new XFRMI a secunet’s point of view&lt;/a&gt; by Christian Langrock, secunet Security Networks AG&lt;/h3&gt;
+&lt;p&gt;Christian presented about the secunet usecase of the xfrm interfaces. It turned out that the new approach meets all these usecase requirements.&lt;/p&gt;
+&lt;h3&gt;xfrm 32/64 bit compat layer by Florian Westphal&lt;/h3&gt;
+&lt;p&gt;Florian Westphal presented and old effort to add a compatbility layer to XFRM to allow 32bit tasks to add and receive ipsec policies and states. This affects the x86_64 platform where 32bit binaries fail to talk to the ipsec subsystem because of alignment and differences in structure layouts. Although there was not much interest in this compat layer back in to 2010 this has changed a bit because Android is
+now encountering this problem.&lt;/p&gt;
+&lt;h3&gt;IPsec offloading session by Don Skidmore / Boris Pismenny / Sowmini Varadhan / &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/MapUpdate-JH-DS.pdf"&gt;Josh Hay&lt;/a&gt; / Stephen Doyle&lt;/h3&gt;
+&lt;p&gt;Boris Pismenny presented how to support encapsulations with &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/IPsec-full_offload-BP.pdf"&gt;inline crypto offload&lt;/a&gt; (vlan, vxlan, bonding and teaming). Overall, the idea is to bind the virtual netdev to a physical netdev and expose the IPsec crypto offload capabilities and callbacks from the upper netdev.
+The use of full &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/RoCE-BP.pdf"&gt;IPsec termination with Infiniband RoCEv2&lt;/a&gt; by Boris Pismenny. Thoughts for &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/quic_offload-DS-JH.pdf"&gt;QUIC/XFRM offloads&lt;/a&gt; were presented by Don Skidmore. Sowmini: QUIC group is already considering using a modified DTLS for this, please compare notes with them.&lt;/p&gt;
+&lt;p&gt;QUIC/DTLS &lt;a href="https://datatracker.ietf.org/meeting/101/materials/slides-101-quic-stream-0-and-dtls-00"&gt;slides&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Boris Pismenny presented various issues encountered by Mellanox with &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/Linux_Full_IPsec_Offload-BP.pdf"&gt;handling IP fragments with offloads&lt;/a&gt;. Steven Doyle concurred that Intel too has had to confront these challenges. Reference here is Appendix D of RFC 4301. The problem is “what to do when the IPsec offload engine encounters a fragment”. It can:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;disable h/w offload and fall back to s/w offload (Paul: temporary blip in perf may be hard for admin to follow. This could be a DoS vector)&lt;/li&gt;
+&lt;li&gt;drop the fragment (Steffen: can we not just deal with this in slow path?)&lt;/li&gt;
+&lt;li&gt;just do s/w offload for the fragment (very hard to track seq# state etc between h/w and s/w ipsec)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Sowmini: &lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/questions_virtualized_ipsec-SV.pdf"&gt;open questions about device/host terminated offloads&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;host terminated offloads: the scope of the SPI number space is within the VM, so two VMs may end up using the same SPI for tunnels. Offload needs to tracke both SPI and an unique identifier for the VM (VLAN and mac address)&lt;/li&gt;
+&lt;li&gt;device terminated offload: where is IKE running, and what addresses is it using for the sockets to the IKE peer? If the device terminated offload is used in conjunction with some other underlay like VXLAN, then the cleanest design is to have IKE run on the hypervisor, and set up SA’s using the underlay IP address as the local address (in which case this becomes the same as IPsec offload on bare-metal, with the payload being an L2 or L3 packet from the VM). Other models (where there is no underlay) lead to several open questions and complexity, and are needless&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/ixgbe_offload-Intel-FlowDirector-SN.pdf"&gt;ixgbe offload status, Intel FlowDirector&lt;/a&gt; by Shannon Nelson&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Intel’s Niantic 10Gbe has ipsec hardware offload that has been laying in wait since 2009, no fw updates needed in existing products&lt;/li&gt;
+&lt;li&gt;recent patches to support ipsec offload pulled into v4.17&lt;/li&gt;
+&lt;li&gt;performance is nearly line rate at around 9.1 Gbps in informal tests&lt;/li&gt;
+&lt;li&gt;includes support for TSO and checksum offloads&lt;/li&gt;
+&lt;li&gt;RSS and FlowDirector header parsing happens after inbound decryption&lt;/li&gt;
+&lt;li&gt;Allows for multi-rx-queue processing, flow directing to proper CPUs&lt;/li&gt;
+&lt;li&gt;some tunneled-ipsec reportedly available on Rx, not yet tested&lt;/li&gt;
+&lt;li&gt;Niantic FlowDirector could be (ab)used for further ipsec-related flow handling&lt;/li&gt;
+&lt;li&gt;odd things seen: occasional out-of-order TSO fragments; lower throughput on multi-threaded
+   discussions mentioned both of these seen elsewhere
+   multi-threaded issue may be related to xfrm table contention&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Status of IPsec in Android P. and discussions by Lorenzo Colitti / Nathan Harold&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/IPsec-in-android-LC-NH.pdf"&gt;IPsec in Android&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/Networking_In_Your_Pocket-LC-NH.pdf"&gt;Networking In Your Pocket&lt;/a&gt;, How the Linux networking stack is made to work on Android devices&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/pfp-SV.pdf"&gt;Populate From Packet&lt;/a&gt; by Sowmini Varadhan&lt;/h3&gt;
+&lt;p&gt;Problem description: for clear traffic we get entropy/flow-hashing for ECMP and RSS from the TCP/UDP 4-tuple. With IPsec, you can get the same entropy using SPI in place of TCP/UDP port numbers but you would then need to ensure that each 4-tuple has a unique SPI. The challenge here is that TCP/UDP clients typically do an implicit bind
+for the client port (let the kernel choose an ephemeral port) so you cannot set up the SA for the 4-tuple &lt;em&gt;before&lt;/em&gt; connection comes up.&lt;/p&gt;
+&lt;p&gt;RFC 4301 proposes the “Populate From Packet” to solve this: when the data packet hits the xfrm layer and finds a SPD marked “XFRM_POLICY_PFP”, have the kernel send up an SADB_ACQUIRE to Pluto (or the IKE implementation) asking for an SA with the full 4-tuple. This upcall will be generated after we know the full 4-tuple (after connect() or sendmsg()). Needs a small patch in the kernel, and some changes to Pluto.&lt;/p&gt;
+&lt;p&gt;One concern here is that we may be hashing thousands of sockets across a few paths (e.g., 8, 16, or 32 paths) so we may want to put
+an upper bound on the numbre of PFP SAs generated. Remedy: have a unable to cap the number of  PFP-SAs that pluto will generate e.g.,
+allow admin to say “generate at most 64 4-tuple SAs for a PFP SPD, the 65th ACQUIRE will just generate a wildcard SA (*.&lt;serverport&gt;) as we do today&lt;/p&gt;
+&lt;p&gt;Sowmini/Paul to go and try this out over the next couple of weeks.&lt;/p&gt;
+&lt;h3&gt;GCM &amp;amp; FIPS 140-2 by Stephan Müller&lt;/h3&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/IPsecSummit201803-PW.pdf"&gt;Libreswan presentation and discussion session&lt;/a&gt; by Paul Wouters&lt;/h3&gt;
+&lt;p&gt;&lt;a href="https://libreswan.org/wiki/Linux_IPsec_Summit_2018_wishlist"&gt;https://libreswan.org/wiki/Linux_IPsec_Summit_2018_wishlist&lt;/a&gt;&lt;/p&gt;
+&lt;h3&gt;Post Quantum Crypto by Kai Martius&lt;/h3&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/flowcache-SK.pdf"&gt;IPsec flowcache replacement&lt;/a&gt;, Netfilter flowtable by Steffen Klassert / Pablo Neira Ayuso&lt;/h3&gt;
+&lt;p&gt;Steffen mentioned that we lost our fastpath policy/SA lookup with the removal of the flowcache. He asked about possible replacement solutions. One replacement proposal was to use a Radix Tree. Another one is the new Netfilter flowtable infrastructure, Pablo gave an introduction about that. The main question here would be how to configure this flowtable from within IPsec without the need of
+an extra configuration step for the user.&lt;/p&gt;
+&lt;h3&gt;Netfilter forwarding fastpath by Pablo Neira Ayuso / Steffen Klassert&lt;/h3&gt;
+&lt;p&gt;Pablo presented the idea on how to use the GRO layer to aggregate even UDP packets and how to bypass most of the stack in the forwarding case. This a followup on the ideas and PoC Steffen presented at the netfilter workshop last year. Pablo also explaind how this can be configured by using nftables.&lt;/p&gt;
+&lt;p&gt;After that, Steffen did a live demo of the forwarding fastpath to show that this basically doubles the UDP (and UDP tunneled in IPsec) throughput.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://git.kernel.org/pub/scm/linux/kernel/git/klassert/linux-stk.git/log/?h=net-next-nft-ffwd"&gt;RFC Code&lt;/a&gt;&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/strongSwan-AS-TB.pdf"&gt;Strongswan Presentation and discussion session&lt;/a&gt; by Andreas Steffen / Tobias Brunner&lt;/h3&gt;
+&lt;p&gt;&lt;a href="https://wiki.strongswan.org/projects/strongswan/wiki/Linux_IPsec_Workshop_2018"&gt;https://wiki.strongswan.org/projects/strongswan/wiki/Linux_IPsec_Workshop_2018&lt;/a&gt;&lt;/p&gt;
+&lt;h3&gt;crypto async callbacks by Hannes Frederic Sowa&lt;/h3&gt;
+&lt;p&gt;With the current state of the kernel, the ipsec stack has no real control whether offloading takes place, a slow path can be used or the offloaded encryption/decryption is scheduled in an asynchronous callback. The reason for that is, that a lof of CPUs employ registers for doing such offloading, which are often not saved and restored by context switches (to keep the amount of data to be transferred for every context switch low). As a consequence, small system behavioral changes, like processes getting scheduled on the CPU where
+the ipsec traffic is being received can drastically alter the performance outcome.&lt;/p&gt;
+&lt;p&gt;This talk presented the state of affair on different architectures (namely those, which have overloaded crypto routines in arch/*/crypto/) and showed their current use and problems. The x86 as well as the arm architecture have this behavior and such a discussion should be stimulated on how to avoid those patterns.&lt;/p&gt;
+&lt;p&gt;Possible ideas to remedy this are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;dispatching ipsec crypto operations to cryptd or pdata&lt;/li&gt;
+&lt;li&gt;employing threaded napi operations thus crypto engine runs in process context always&lt;/li&gt;
+&lt;li&gt;possibility of manually saving and restoring the FPU state on stack with irq handling&lt;/li&gt;
+&lt;li&gt;allowing xfrm api to configure behavior&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Additionally the linux kernel doesn’t provide any kinds of counters or easily observable mechanism to detect this problem.&lt;/p&gt;
+&lt;h3&gt;State of IPsec testing and possible directions by Sabrina Dubroca&lt;/h3&gt;
+&lt;p&gt;ipsec secpath matching with nftables by Florian Westphal&lt;/p&gt;
+&lt;p&gt;Florian presented work on making ipsec policy / secpath matching available in nftables. This discussion mainly revolved around useability, command line syntax and so on. Unlike iptables the nftables policy version will support lookups in sets. As result of this session the proof-of-concept work will see considerable changes to improve usability and reduce leakage of kernel implementation names and details into the nftables command line tools grammar.&lt;/p&gt;
+&lt;h3&gt;Improving GRO handling for ESP packets by Yossi Kuperman&lt;/h3&gt;
+&lt;h3&gt;Exposing secpath to eBPF programs by Eyal Birger&lt;/h3&gt;
+&lt;p&gt;Eyal Birger presented use cases for exposing the xfrm state to eBPF programs. One use case is to allow custom routing implementations where the selection criteria is based in part on incoming tunnel information. Another use case is custom statistics based on tunnel information.
+QoS and IPsec by Thomas Egerer&lt;/p&gt;
+&lt;p&gt;Secunet customers are seeing the following problem:  if two packets going on an IPsec tunnel have different values of the DSCP in the IP ToS, the packets may get reordered (depending on the diffserv configuration). The receiving end of the IPsec tunnel then ends up dropping packets due to IPsec replay protection checks.&lt;/p&gt;
+&lt;p&gt;this is a potential problem for RoCE as well, where the DSCP is heavily used to give differential treatment to packet flows, and were packet loss is not tolerated well by RDMA&lt;/p&gt;
+&lt;p&gt;Possible solution is to remedy this using PFP- extend the selector to be “4-tuple + ToS” for triggering PFP based upcalls. Also needs changes everywhere (both in the IKE daemon and in the xfrm layer) to factor the ToS in each selector lookup of SPD/SADB&lt;/p&gt;
+&lt;p&gt;Some known limitations of this proposal: cannot handle the case where packet priority is carried in the 802.1q VLAN tag (in the 3 bit user-priority field). If the diffserv domain re-marks the IP DSCP, you can still have packet reordering and drops (the IP TOS is not protected by ipsec). If only one peer supports multiple DSCP values, how do we set up multiple IPsec SA’s per DSCP? (proposed solution – fall back to having one SA for all ToS values)&lt;/p&gt;
+&lt;p&gt;In spite of limitations, the idea of having SPI per ToS will help the common case at least, so will be explored as part of the PFP effort.&lt;/p&gt;
+&lt;h3&gt;&lt;a href="https://antonyantony.github.io/linux-ipsec.org/slides/2018/misc_topics-SK.pdf"&gt;Future of PFKEY in the kernel, Configurable system default (allow/drop) if there is no matching policy, Crypto layer problems, Hardware GRO&lt;/a&gt; by Steffen Klassert&lt;/h3&gt;
+&lt;p&gt;Future of PFKEY in the Kernel: The only feature that the *swan implementations still use is the autoprobing of available
+crypto algorithms because there is nothing like that in the netlink interface. So we agreed to implement an autoprobing in netlink and mark PFKEY as  deprecated.&lt;/p&gt;
+&lt;p&gt;Configurable system default (allow/drop) if there is no matching policy: We discussed the idea to have a configurable system default to allow or drop packets if there is no matching IPsec policy (current default is allow). This would be configurable per direction (input/output/forward). During discussion the idea came up to have a kernel commandline option to configure this.&lt;/p&gt;
+&lt;p&gt;Crypto layer problems: Steffen noted that performance optimizations of the network layer are often ‘eat up’ by the crypto layer, mostly because of (unnecessary) memcopy.&lt;/p&gt;
+&lt;p&gt;Hardware GRO: This was just a feature request to the hardware vendors because, for instance the forwarding fastpath could benefit from that.&lt;/p&gt;
+&lt;h3&gt;Future of the workshop and the Linux IPsec communtiy, Closing by Steffen Klassert&lt;/h3&gt;
+&lt;p&gt;During this session, we discussed about the workshop itself, what was good/bad etc. The attendees agreed that the worshop was very fruitful and should be continued once a year. It was also discussed to found a Linux IPsec association to make the organization of the workshop easier and to get some communication infrastructure for the community.&lt;/p&gt;</content><category term="conferences"/></entry></feed>

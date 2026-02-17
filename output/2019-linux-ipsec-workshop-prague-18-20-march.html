@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2019 Linux IPsec workshop, Prague (18 - 20 March)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2019 Linux IPsec workshop, Prague (18 - 20 March)
+    </h2>
+  </header>
+  <ul>
+<li>Recap IPsec workshop 2018</li>
+<li>xfrm policy database</li>
+<li>IPsec full-offload</li>
+<li>Offloading the policy database into hardware</li>
+<li>post-quantum crypto for IKEv2</li>
+<li>Foundation meeting of the ‘IPsec and Network Security e.V.’</li>
+<li>Bonus adhoc kernel debugging section</li>
+<li>IPsec tunnel-mode integration in Android</li>
+<li>ESP over TCP (rfc8229)<ul>
+<li>netlink attribute for tcp encap on xfrm states: XFRMA_ENCAP (like for udp)</li>
+<li>IKETCP prefix: sent by userspace before enabling TCP_ULP (connect() side), received by userspace (accept() socket) before enabling TCP_ULP</li>
+<li>non-ESP marker: will be passed to/from userspace (contrary to what the slides say). consistent with UDP encap behavior. kernel adds/strips the 2-byte length prefix to each IKE message.</li>
+</ul>
+</li>
+<li>open questions<ul>
+<li>delete states then close socket, or close socket then delete states?</li>
+<li>TCP queue tuning and congestion control</li>
+</ul>
+</li>
+<li>Integrating IPsec and XDP</li>
+<li>IPsec performance (Steffen Klassert)</li>
+<li>Flow cache replacement (Florian Westphal)</li>
+<li>Fastpath for IPsec gateways using the flowtable infrastructure</li>
+<li>libreswan items/wish list and experienes with XFRMi</li>
+<li>Configuring the OS native IPSec stack from Python. What could go wrong?</li>
+<li>Implicit IV / ESP Header Compression</li>
+<li>IPsec with listified GRO</li>
+</ul>
+  <footer>
+    <!-- <p>Published: <time datetime="2019-03-20T00:00:00+00:00"> -->
+    <!--     Wed 20 March 2019 -->
+    <!--   </time></p> -->
+    <p>
+      <a href="./category/conferences.html">Conferences</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>
