@@ -32,7 +32,7 @@
   </header>
   <h2>Overview</h2>
 <p>This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS</p>
-<h3>Prerequisites</h3>
+<h2>Prerequisites</h2>
 <p>Before installing TRex, ensure your system meets the following requirements:</p>
 <ul>
 <li><strong>Operating System:</strong> Ubuntu 24.04 LTS</li>
@@ -67,7 +67,7 @@ python3.12<span class="w"> </span>-m<span class="w"> </span>venv<span class="w">
 <span class="nb">type</span><span class="w"> </span>python3.12<span class="w">  </span><span class="c1"># should show /root/venv/bin/python3.12</span>
 </code></pre></div>
 
-<h2>Installing DOCA-OFED</h2>
+<h3>Installing DOCA-OFED</h3>
 <p>For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.</p>
 <p>Navigate to the <a href="https://developer.nvidia.com/doca-downloads">DOCA downloads page</a> and select the local package for your OS.</p>
 <div class="highlight"><pre><span></span><code>wget<span class="w"> </span>https://www.mellanox.com/downloads/DOCA/DOCA_v3.2.1/host/doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
@@ -79,7 +79,7 @@ mst<span class="w"> </span>start
 mst<span class="w"> </span>status<span class="w"> </span>-v
 </code></pre></div>
 
-<h3>Downloading TRex</h3>
+<h3>Installing TRex 3.08</h3>
 <div class="highlight"><pre><span></span><code>wget<span class="w"> </span>--no-check-certificate<span class="w"> </span>--no-cache<span class="w"> </span>https://trex-tgn.cisco.com/trex/release/latest
 mv<span class="w"> </span>latest<span class="w"> </span>trex-v3.08.tgz
 tar<span class="w"> </span>xvf<span class="w"> </span>trex-v3.08.tgz
@@ -91,7 +91,7 @@ chmod<span class="w"> </span>-R<span class="w"> </span><span class="m">777</span
 </code></pre></div>
 
 <p>At the time of writing, <code>latest</code> pointed to v3.08.</p>
-<h2>Starting TRex Server</h2>
+<h3>Starting TRex Server</h3>
 <p>TRex is installed under <code>/var/tmp/trex-v3.08</code> on the sunset host. The server runs in the foreground, so start it inside a <code>screen</code> session — that way you can reattach later with <code>screen -x</code> to check its output.</p>
 <p>Activate the venv first, then launch <code>screen</code> and start TRex inside it:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>/root/venv/bin/activate
