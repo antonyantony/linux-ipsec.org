@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>IPsec and Network Security - research</title><link href="https://antonyantony.github.io/linux-ipsec.org/" rel="alternate"/><link href="https://antonyantony.github.io/linux-ipsec.org/feeds/research.atom.xml" rel="self"/><id>https://antonyantony.github.io/linux-ipsec.org/</id><updated>2026-02-12T00:00:00+00:00</updated><entry><title>2026 TRex Testing (Frankfurt, 10-12 Feb)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html" rel="alternate"/><published>2026-02-12T00:00:00+00:00</published><updated>2026-02-12T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2026-02-12:/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
 &lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS&lt;/p&gt;
-&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;h3&gt;Prerequisites&lt;/h3&gt;
 &lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Operating System:&lt;/strong&gt; Ubuntu 24.04 LTS&lt;/li&gt;
@@ -36,7 +36,7 @@ python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span
 &lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.12&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# should show /root/venv/bin/python3.12&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;h3&gt;Installing DOCA-OFED&lt;/h3&gt;
+&lt;h2&gt;Installing DOCA-OFED&lt;/h2&gt;
 &lt;p&gt;For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.&lt;/p&gt;
 &lt;p&gt;Navigate to the &lt;a href="https://developer.nvidia.com/doca-downloads"&gt;DOCA downloads page&lt;/a&gt; and select the local package for your OS.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;https://www.mellanox.com/downloads/DOCA/DOCA_v3.2.1/host/doca-host_3.2.1-044000-25.10-ubuntu2404_amd64.deb
@@ -48,7 +48,7 @@ mst&lt;span class="w"&gt; &lt;/span&gt;start
 mst&lt;span class="w"&gt; &lt;/span&gt;status&lt;span class="w"&gt; &lt;/span&gt;-v
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
-&lt;h3&gt;Installing TRex 3.08&lt;/h3&gt;
+&lt;h3&gt;Downloading TRex&lt;/h3&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;wget&lt;span class="w"&gt; &lt;/span&gt;--no-check-certificate&lt;span class="w"&gt; &lt;/span&gt;--no-cache&lt;span class="w"&gt; &lt;/span&gt;https://trex-tgn.cisco.com/trex/release/latest
 mv&lt;span class="w"&gt; &lt;/span&gt;latest&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
 tar&lt;span class="w"&gt; &lt;/span&gt;xvf&lt;span class="w"&gt; &lt;/span&gt;trex-v3.08.tgz
@@ -60,7 +60,7 @@ chmod&lt;span class="w"&gt; &lt;/span&gt;-R&lt;span class="w"&gt; &lt;/span&gt;&
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;p&gt;At the time of writing, &lt;code&gt;latest&lt;/code&gt; pointed to v3.08.&lt;/p&gt;
-&lt;h3&gt;Starting TRex Server&lt;/h3&gt;
+&lt;h2&gt;Starting TRex Server&lt;/h2&gt;
 &lt;p&gt;TRex is installed under &lt;code&gt;/var/tmp/trex-v3.08&lt;/code&gt; on the sunset host. The server runs in the foreground, so start it inside a &lt;code&gt;screen&lt;/code&gt; session — that way you can reattach later with &lt;code&gt;screen -x&lt;/code&gt; to check its output.&lt;/p&gt;
 &lt;p&gt;Activate the venv first, then launch &lt;code&gt;screen&lt;/code&gt; and start TRex inside it:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
