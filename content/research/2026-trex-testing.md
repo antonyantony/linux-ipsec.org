@@ -5,7 +5,7 @@ Summary: TRex Testing: A Quick Start on Ubuntu 24.04
 ## Overview
 This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS
 
-### Prerequisites
+## Prerequisites
 Before installing TRex, ensure your system meets the following requirements:
 
 - **Operating System:** Ubuntu 24.04 LTS
@@ -52,7 +52,7 @@ source /root/venv/bin/activate
 type python3.12  # should show /root/venv/bin/python3.12
 ```
 
-## Installing DOCA-OFED
+### Installing DOCA-OFED
 For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.
 
 Navigate to the [DOCA downloads page](https://developer.nvidia.com/doca-downloads) and select the local package for your OS.
@@ -67,7 +67,7 @@ mst start
 mst status -v
 ```
 
-### Downloading TRex
+### Installing TRex 3.08
 
 ```bash
 wget --no-check-certificate --no-cache https://trex-tgn.cisco.com/trex/release/latest
@@ -81,7 +81,7 @@ chmod -R 777 /var/tmp/trex-v3.08/
 ```
 At the time of writing, `latest` pointed to v3.08.
 
-## Starting TRex Server
+### Starting TRex Server
 TRex is installed under `/var/tmp/trex-v3.08` on the sunset host. The server runs in the foreground, so start it inside a `screen` session — that way you can reattach later with `screen -x` to check its output.
 
 Activate the venv first, then launch `screen` and start TRex inside it:
