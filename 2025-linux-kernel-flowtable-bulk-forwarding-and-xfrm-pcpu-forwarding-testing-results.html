@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2025 Linux Kernel Flowtable Bulk Forwarding and XFRM pCPU Forwarding — Testing Results</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2025 Linux Kernel Flowtable Bulk Forwarding and XFRM pCPU Forwarding — Testing Results
+    </h2>
+  </header>
+  <h2>Introduction</h2>
+<p>This is a short summary of testing done jointly with Pablo Neira Ayuso,
+Steffen Klassert, and Antony Antony. We are testing work-in-progress Linux kernel support
+for forwarding data path using Netfilter
+<a href="https://docs.kernel.org/networking/nf_flowtable.html">flowtable</a>
+for bulk forwarding, to improve forwarding data path performance, especially IPsec forwarding as IPsec gateway.
+Tests use developmental kernel versions v6.16 and v6.17.</p>
+<h2>Test Setup</h2>
+<p>The test setup is the same as described in
+<a href="./2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html">2025 Linux IPsec pCPU testing (Madrid)</a>.</p>
+<h2>Flowtable Bulking Testing Results</h2>
+<p>All tests here are using smaller ethernet frame sizes, i.e. 128 bytes due to a limitation of the system.  This is to show the scaling properties and later to be tested with 1518 byte frames.</p>
+<h3>Forwarding Tests (no IPsec)</h3>
+<p>Test without IPsec. Frame size: 128 bytes.</p>
+<p><img alt="RX throughput (Gbps)" src="./images/20251017-bulking-no-xfrm-rx-gbps.png"></p>
+<p><img alt="RX PPS (Mpps)" src="./images/20251017-bulking-no-xfrm-rx-mpps.png"></p>
+<p>A second run of the same test, revealing a slight difference compared to the first run.</p>
+<p><img alt="RX throughput (Gbps)" src="./images/20251020-bulking-no-xfrm-rx-gbps.png"></p>
+<p><img alt="RX PPS (Mpps)" src="./images/20251020-bulking-no-xfrm-rx-pps.png"></p>
+<h3>Forwarding Tests (IPsec, Multi-Flow)</h3>
+<p>Forwarding multiple flows by changing UDP source port over an IPsec tunnel.
+IPsec uses a pair of SAs (no pCPU). All flows are forwarded to one CPU
+using a flow table rule in the NIC. Without this, the NIC would distribute
+traffic across multiple CPUs by default. Since there is only one SA, this
+would cause contention and out-of-order ESP packet arrival, leading to ESP
+packet drops when the replay window is small.</p>
+<p><img alt="RX Gbps using single SA and bulk forwarding, multiple flows" src="./images/20251017-ports-dst-ports-gbps.png"></p>
+<p><img alt="RX Gbps using single SA no bulk forwarding ESP Offload enabled, multiple flows" src="./images/20251016-ports-dst-ports-gbps.png"></p>
+<!-- TODO: confirm which test these GRO settings apply to -->
+<p>Hardware GRO settings on the <code>black</code> interface. Full output: <a href="./20251020-gro-black-default.txt">boot default</a> | <a href="./20251020-gro-black-enabled.txt">after applying settings</a></p>
+<p>Command applied:</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">red</span><span class="w"> </span><span class="n">black</span><span class="p">;</span><span class="w"> </span><span class="n">do</span><span class="w"> </span><span class="n">ethtool</span><span class="w"> </span><span class="o">-</span><span class="n">K</span><span class="w"> </span><span class="o">$</span><span class="n">i</span><span class="w"> </span><span class="n">tx</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="n">rx</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="n">gso</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">tso</span><span class="w"> </span><span class="n">off</span><span class="w"> </span><span class="n">gro</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">lro</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">rxhash</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">rxvlan</span><span class="w"> </span><span class="n">off</span><span class="p">;</span><span class="w"> </span><span class="n">done</span>
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Boot default</th>
+<th>After command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rx-checksumming</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tx-checksumming</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tx-checksum-ip-generic</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tcp-segmentation-offload</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tx-tcp-segmentation</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tx-tcp6-segmentation</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>large-receive-offload</code></td>
+<td>off</td>
+<td><strong>on</strong></td>
+</tr>
+<tr>
+<td><code>rx-vlan-offload</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+<tr>
+<td><code>tx-udp-segmentation</code></td>
+<td>on</td>
+<td>off</td>
+</tr>
+</tbody>
+</table>
+<h2>Flowtable setup time</h2>
+<p>With a single flow the flowtable setup cost is unnoticeable — only the first packet traverses the slow path to create the offload entry. With TCP this works ideally: the SYN packet triggers the offload and all subsequent packets take the fast path.</p>
+<p>However, when a large number of flows arrive at an IPsec gateway that has no flowtable entries yet, every flow pays this setup cost. With 5000 source-port flows, ~32K packets traverse the slow path during the ramp-up period before all flows are offloaded. The nft counters below show this (<a href="#flow-offload">nft ruleset</a>).</p>
+<p><a name="flow-offload"></a>
+<em>Time to build slow path 5000 flows</em></p>
+<div class="highlight"><pre><span></span><code><span class="nx">nft</span><span class="w"> </span><span class="nx">list</span><span class="w"> </span><span class="nx">ruleset</span>
+<span class="nx">table</span><span class="w"> </span><span class="nx">inet</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">flowtable</span><span class="w"> </span><span class="nx">f</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">hook</span><span class="w"> </span><span class="nx">early_ingress</span><span class="w"> </span><span class="nx">priority</span><span class="w"> </span><span class="nx">filter</span>
+<span class="w">        </span><span class="nx">devices</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;black&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;red&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">chain</span><span class="w"> </span><span class="nx">forward</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">type</span><span class="w"> </span><span class="nx">filter</span><span class="w"> </span><span class="nx">hook</span><span class="w"> </span><span class="nx">forward</span><span class="w"> </span><span class="nx">priority</span><span class="w"> </span><span class="nx">filter</span><span class="p">;</span><span class="w"> </span><span class="nx">policy</span><span class="w"> </span><span class="nx">accept</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">ip</span><span class="w"> </span><span class="nx">protocol</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">tcp</span><span class="p">,</span><span class="w"> </span><span class="nx">udp</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nx">flow</span><span class="w"> </span><span class="nx">add</span><span class="w"> </span><span class="err">@</span><span class="nx">f</span><span class="w"> </span><span class="nx">log</span><span class="w"> </span><span class="nx">prefix</span><span class="w"> </span><span class="s">&quot;OFFLOADED: &quot;</span><span class="w"> </span><span class="nx">counter</span><span class="w"> </span><span class="nx">packets</span><span class="w"> </span><span class="mi">16384</span><span class="w"> </span><span class="nx">bytes</span><span class="w"> </span><span class="mi">1867776</span>
+<span class="w">        </span><span class="nx">counter</span><span class="w"> </span><span class="nx">packets</span><span class="w"> </span><span class="mi">32768</span><span class="w"> </span><span class="nx">bytes</span><span class="w"> </span><span class="mi">3735552</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2>XFRM Per-CPU Forwarding Using XDP</h2>
+<p>Initial tests using <a href="https://github.com/antonyantony/xdp-tools">xdp-tools</a> with IPsec/XFRM pCPU support. In QEMU this works. However, when running on hardware with Mellanox CX7 NIC,
+we encounter a kernel Oops (crash).</p>
+<p><em>Kernel oops (dmesg excerpt) xdp-tool</em></p>
+<div class="highlight"><pre><span></span><code><span class="p">[</span><span class="mf">43920.895685</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">      </span><span class="n">C0</span><span class="p">]</span><span class="w"> </span><span class="n">adding</span><span class="w"> </span><span class="n">new</span><span class="w"> </span><span class="n">tunnel</span><span class="w"> </span><span class="n">tuple</span>
+<span class="p">[</span><span class="mf">43920.895687</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">      </span><span class="n">C0</span><span class="p">]</span><span class="w"> </span><span class="n">tunnel</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="w"> </span><span class="n">l3proto</span><span class="o">=</span><span class="mi">2</span><span class="w"> </span><span class="n">l4proto</span><span class="o">=</span><span class="mi">50</span><span class="w"> </span><span class="n">spi</span><span class="o">:</span><span class="n">c00da7c8</span><span class="w"> </span><span class="n">iifidx</span><span class="o">=</span><span class="mi">6</span>
+<span class="p">[</span><span class="mf">55769.370122</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="o">------------</span><span class="p">[</span><span class="w"> </span><span class="n">cut</span><span class="w"> </span><span class="n">here</span><span class="w"> </span><span class="p">]</span><span class="o">------------</span>
+<span class="p">[</span><span class="mf">55769.370129</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">kernel</span><span class="w"> </span><span class="n">BUG</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">linux</span><span class="o">/</span><span class="n">skbuff</span><span class="p">.</span><span class="n">h</span><span class="o">:</span><span class="mi">2785</span><span class="o">!</span>
+<span class="p">[</span><span class="mf">55769.370159</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">Oops</span><span class="o">:</span><span class="w"> </span><span class="n">invalid</span><span class="w"> </span><span class="n">opcode</span><span class="o">:</span><span class="w"> </span><span class="mo">0000</span><span class="w"> </span><span class="p">[</span><span class="err">#</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n">SMP</span>
+<span class="p">[</span><span class="mf">55769.370174</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">CPU</span><span class="o">:</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="n">UID</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n">PID</span><span class="o">:</span><span class="w"> </span><span class="mi">58734</span><span class="w"> </span><span class="n">Comm</span><span class="o">:</span><span class="w"> </span><span class="n">cpumap</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="n">map</span><span class="o">:</span><span class="mi">7</span><span class="w"> </span><span class="n">Kdump</span><span class="o">:</span><span class="w"> </span><span class="n">loaded</span><span class="w"> </span><span class="n">Not</span><span class="w"> </span><span class="n">tainted</span><span class="w"> </span><span class="mf">6.17.0</span><span class="o">-</span><span class="n">rc2</span><span class="o">+</span><span class="w"> </span><span class="err">#</span><span class="mi">34</span><span class="w"> </span><span class="n">PREEMPT</span><span class="p">(</span><span class="n">voluntary</span><span class="p">)</span>
+<span class="p">[</span><span class="mf">55769.370194</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">Hardware</span><span class="w"> </span><span class="n">name</span><span class="o">:</span><span class="w"> </span><span class="n">Supermicro</span><span class="w"> </span><span class="n">AS</span><span class="w"> </span><span class="mi">-1115</span><span class="n">CS</span><span class="o">-</span><span class="n">TNR</span><span class="o">-</span><span class="n">EU</span><span class="o">/</span><span class="n">H13SSW</span><span class="p">,</span><span class="w"> </span><span class="n">BIOS</span><span class="w"> </span><span class="mf">3.0</span><span class="w"> </span><span class="mi">09</span><span class="o">/</span><span class="mi">23</span><span class="o">/</span><span class="mi">2024</span>
+<span class="p">[</span><span class="mf">55769.370203</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">RIP</span><span class="o">:</span><span class="w"> </span><span class="mo">0010</span><span class="o">:</span><span class="n">eth_type_trans</span><span class="o">+</span><span class="mh">0xe8</span><span class="o">/</span><span class="mh">0x150</span>
+<span class="p">[</span><span class="mf">55769.370216</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">Code</span><span class="o">:</span><span class="w"> </span><span class="mi">80</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="n">eb</span><span class="w"> </span><span class="n">ba</span><span class="w"> </span><span class="mi">8</span><span class="n">b</span><span class="w"> </span><span class="mi">47</span><span class="w"> </span><span class="mi">70</span><span class="w"> </span><span class="mi">2</span><span class="n">b</span><span class="w"> </span><span class="mi">47</span><span class="w"> </span><span class="mi">74</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="mi">8</span><span class="n">b</span><span class="w"> </span><span class="mi">97</span><span class="w"> </span><span class="n">d0</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mi">83</span><span class="w"> </span><span class="n">f8</span><span class="w"> </span><span class="mo">01</span><span class="w"> </span><span class="mi">7</span><span class="n">e</span><span class="w"> </span><span class="mi">1</span><span class="n">b</span><span class="w">  </span><span class="mi">48</span><span class="w"> </span><span class="mi">85</span><span class="w"> </span><span class="n">d2</span><span class="w"> </span><span class="mi">74</span><span class="w"> </span><span class="mo">06</span><span class="w"> </span><span class="mi">66</span><span class="w"> </span><span class="mi">83</span><span class="w"> </span><span class="mi">3</span><span class="n">a</span><span class="w"> </span><span class="n">ff</span><span class="w"> </span><span class="mi">74</span><span class="w"> </span><span class="mi">09</span><span class="w"> </span><span class="n">b8</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">04</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="n">eb</span><span class="w"> </span><span class="mi">9</span><span class="n">e</span><span class="w"> </span><span class="o">&lt;</span><span class="mf">0f</span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="n">b</span><span class="w"> </span><span class="n">b8</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">01</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="mo">00</span><span class="w"> </span><span class="n">eb</span><span class="w"> </span><span class="mi">95</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="mi">85</span><span class="w"> </span><span class="n">ff</span><span class="w"> </span><span class="mi">74</span><span class="w"> </span><span class="n">eb</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="mi">8</span><span class="n">d</span><span class="w">  </span><span class="mi">5</span><span class="n">c</span><span class="w"> </span><span class="mi">24</span><span class="w"> </span><span class="mo">06</span><span class="w"> </span><span class="mi">31</span><span class="w"> </span><span class="n">f6</span><span class="w"> </span><span class="n">b9</span>
+<span class="p">[</span><span class="mf">55769.370236</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">RSP</span><span class="o">:</span><span class="w"> </span><span class="mo">001</span><span class="mi">8</span><span class="o">:</span><span class="n">ffa000000c9c7d58</span><span class="w"> </span><span class="n">EFLAGS</span><span class="o">:</span><span class="w"> </span><span class="mo">000102</span><span class="mi">83</span>
+<span class="p">[</span><span class="mf">55769.370245</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">RAX</span><span class="o">:</span><span class="w"> </span><span class="mo">00000000000000</span><span class="n">a8</span><span class="w"> </span><span class="n">RBX</span><span class="o">:</span><span class="w"> </span><span class="n">ff1100011bb88d00</span><span class="w"> </span><span class="n">RCX</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000207335100</span>
+<span class="p">[</span><span class="mf">55769.370254</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">RDX</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000100</span><span class="w"> </span><span class="n">RSI</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000125200000</span><span class="w"> </span><span class="n">RDI</span><span class="o">:</span><span class="w"> </span><span class="n">ff1100011bb88d00</span>
+<span class="p">[</span><span class="mf">55769.370262</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">RBP</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000207335000</span><span class="w"> </span><span class="n">R08</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000207335000</span><span class="w"> </span><span class="n">R09</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000000</span>
+<span class="p">[</span><span class="mf">55769.370271</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">R10</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000000</span><span class="w"> </span><span class="n">R11</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000001</span><span class="w"> </span><span class="n">R12</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000207335200</span>
+<span class="p">[</span><span class="mf">55769.370279</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">R13</span><span class="o">:</span><span class="w"> </span><span class="n">ff11000125200000</span><span class="w"> </span><span class="n">R14</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000001</span><span class="w"> </span><span class="n">R15</span><span class="o">:</span><span class="w"> </span><span class="mo">0000000000000100</span>
+<span class="p">[</span><span class="mf">55769.370287</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">FS</span><span class="o">:</span><span class="w">  </span><span class="mo">0000000000000000</span><span class="p">(</span><span class="mo">0000</span><span class="p">)</span><span class="w"> </span><span class="n">GS</span><span class="o">:</span><span class="n">ff11002f06570000</span><span class="p">(</span><span class="mo">0000</span><span class="p">)</span><span class="w"> </span><span class="n">knlGS</span><span class="o">:</span><span class="mo">0000000000000000</span>
+<span class="p">[</span><span class="mf">55769.370296</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">CS</span><span class="o">:</span><span class="w">  </span><span class="mo">0010</span><span class="w"> </span><span class="n">DS</span><span class="o">:</span><span class="w"> </span><span class="mo">0000</span><span class="w"> </span><span class="n">ES</span><span class="o">:</span><span class="w"> </span><span class="mo">0000</span><span class="w"> </span><span class="n">CR0</span><span class="o">:</span><span class="w"> </span><span class="mo">00000000</span><span class="mi">80050033</span>
+<span class="p">[</span><span class="mf">55769.370303</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">CR2</span><span class="o">:</span><span class="w"> </span><span class="mf">00007f</span><span class="n">ff613ba498</span><span class="w"> </span><span class="n">CR3</span><span class="o">:</span><span class="w"> </span><span class="mo">00000001</span><span class="mi">81</span><span class="n">ed6006</span><span class="w"> </span><span class="n">CR4</span><span class="o">:</span><span class="w"> </span><span class="mf">0000000000f</span><span class="mi">71</span><span class="n">ef0</span>
+<span class="p">[</span><span class="mf">55769.370312</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">PKRU</span><span class="o">:</span><span class="w"> </span><span class="mi">55555554</span>
+<span class="p">[</span><span class="mf">55769.370317</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">Call</span><span class="w"> </span><span class="n">Trace</span><span class="o">:</span>
+<span class="p">[</span><span class="mf">55769.370323</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">&lt;</span><span class="n">TASK</span><span class="o">&gt;</span>
+<span class="p">[</span><span class="mf">55769.370329</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="n">__xdp_build_skb_from_frame</span><span class="o">+</span><span class="mh">0xa7</span><span class="o">/</span><span class="mh">0x150</span>
+<span class="p">[</span><span class="mf">55769.370340</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="n">cpu_map_kthread_run</span><span class="o">+</span><span class="mh">0x28b</span><span class="o">/</span><span class="mh">0x9b0</span>
+<span class="p">[</span><span class="mf">55769.370350</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">sched_clock</span><span class="o">+</span><span class="mh">0xc</span><span class="o">/</span><span class="mh">0x20</span>
+<span class="p">[</span><span class="mf">55769.370359</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">cpu_map_bpf_prog_run</span><span class="o">+</span><span class="mh">0x150</span><span class="o">/</span><span class="mh">0x150</span>
+<span class="p">[</span><span class="mf">55769.370366</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="n">kthread</span><span class="o">+</span><span class="mh">0xf5</span><span class="o">/</span><span class="mh">0x200</span>
+<span class="p">[</span><span class="mf">55769.370373</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">kthreads_online_cpu</span><span class="o">+</span><span class="mh">0x110</span><span class="o">/</span><span class="mh">0x110</span>
+<span class="p">[</span><span class="mf">55769.370379</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">kthreads_online_cpu</span><span class="o">+</span><span class="mh">0x110</span><span class="o">/</span><span class="mh">0x110</span>
+<span class="p">[</span><span class="mf">55769.370385</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="n">ret_from_fork</span><span class="o">+</span><span class="mh">0xb2</span><span class="o">/</span><span class="mh">0x180</span>
+<span class="p">[</span><span class="mf">55769.370392</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="n">kthreads_online_cpu</span><span class="o">+</span><span class="mh">0x110</span><span class="o">/</span><span class="mh">0x110</span>
+<span class="p">[</span><span class="mf">55769.370399</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="n">ret_from_fork_asm</span><span class="o">+</span><span class="mh">0x11</span><span class="o">/</span><span class="mh">0x20</span>
+<span class="p">[</span><span class="mf">55769.370407</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w">  </span><span class="o">&lt;/</span><span class="n">TASK</span><span class="o">&gt;</span>
+<span class="p">[</span><span class="mf">55769.370411</span><span class="p">]</span><span class="w"> </span><span class="p">[</span><span class="w">  </span><span class="n">T58734</span><span class="p">]</span><span class="w"> </span><span class="n">Modules</span><span class="w"> </span><span class="n">linked</span><span class="w"> </span><span class="k">in</span><span class="o">:</span>
+</code></pre></div>
+
+<p>The oops originates in <code>cpu_map_kthread_run</code>, the CPUMAP kthread that processes XDP-redirected frames. It crashes in <code>__xdp_build_skb_from_frame → eth_type_trans</code>, where the kernel converts an XDP frame back to an skb. The crash did not appear under QEMU with a virtio NIC. The suspected cause is an interaction between the Mellanox CX7 XDP offload and CPUMAP — the driver may set up the XDP frame in a way that <code>eth_type_trans</code> does not expect. The crash is still under investigation and is a blocker for submitting the xdp-tools patch.</p>
+  <footer>
+    <!-- <p>Published: <time datetime="2025-10-10T00:00:00+00:00"> -->
+    <!--     Fri 10 October 2025 -->
+    <!--   </time></p> -->
+    <address>
+      By       <a href="./author/antony-antony.html">Antony Antony</a>
+    </address>
+    <p>
+      <a href="./category/research.html">Research</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>
