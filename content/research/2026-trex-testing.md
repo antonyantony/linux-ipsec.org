@@ -5,7 +5,7 @@ Summary: TRex Testing: A Quick Start on Ubuntu 24.04
 ## Overview
 This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS
 
-### Prerequisites
+## Prerequisites
 Before installing TRex, ensure your system meets the following requirements:
 
 - **Operating System:** Ubuntu 24.04 LTS
@@ -28,7 +28,7 @@ Extract it, run `configure`, and install.
 
 ```bash
 tar -zxf Python-3.12.9.tgz
-cd  Python-3.12.9
+cd Python-3.12.9
 ./configure --enable-optimizations
 make -j 3 install
 ```
@@ -49,10 +49,10 @@ Each time you log in to work with TRex, activate the venv first:
 ```bash
 source /root/venv/bin/activate
 # To verify:
-type python3.12  # should show /root/venv/bin/python3.12
+type python3.12 # it should show /root/venv/bin/python3.12
 ```
 
-## Installing DOCA-OFED
+### Installing DOCA-OFED
 For setups using Mellanox ConnectX NICs, DOCA-OFED is required to ensure proper driver and DPDK support. Configuration details are provided at the end of this document.
 
 Navigate to the [DOCA downloads page](https://developer.nvidia.com/doca-downloads) and select the local package for your OS.
@@ -67,7 +67,7 @@ mst start
 mst status -v
 ```
 
-### Downloading TRex
+### Installing TRex 3.08
 
 ```bash
 wget --no-check-certificate --no-cache https://trex-tgn.cisco.com/trex/release/latest
@@ -81,7 +81,7 @@ chmod -R 777 /var/tmp/trex-v3.08/
 ```
 At the time of writing, `latest` pointed to v3.08.
 
-## Starting TRex Server
+### Starting TRex Server
 TRex is installed under `/var/tmp/trex-v3.08` on the sunset host. The server runs in the foreground, so start it inside a `screen` session — that way you can reattach later with `screen -x` to check its output.
 
 Activate the venv first, then launch `screen` and start TRex inside it:
@@ -101,10 +101,25 @@ The server takes a few seconds to initialize.
 From a second terminal (also inside the Python 3.12 venv), run one of the test scripts. For example:
 
 ```bash
-cd /root/ietf-123-pcpu/tests-trex
+git clone https://github.com/antonyantony/ietf-123-pcpu"
+
+cd ietf-123-pcpu/tests-trex
 ./u1.py
+
+or
+
 ./u1.py --src-ip 192.0.1.253 --dst-ip 192.0.2.253 --pps 1M --frame-size 1518 --flows 2 --duration 10 --flows-end 2 --runs 2
+
+
 ```
+
+The script use u1.conf as configuration file, to generate a config template, the TRex server should not be when generating config, otherwise gen-config won't be able to detect nexthop ARP/neighbor MAC address which is used in dst-mac. If the dst-mac or rev-dst-mac address is incorrect the traffic will be dropped with NO ERRROR counters.
+
+```
+./u1.py --gen-config
+```
+
+Check the the src/dst, MAC addresses are correct.
 
 `u1.py` is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.
 
