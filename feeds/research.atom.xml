@@ -18,7 +18,7 @@ what ships with Ubuntu 24.04.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;Extract it, run &lt;code&gt;configure&lt;/code&gt;, and install.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;tar&lt;span class="w"&gt; &lt;/span&gt;-zxf&lt;span class="w"&gt; &lt;/span&gt;Python-3.12.9.tgz
-&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;Python-3.12.9
+&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;Python-3.12.9
 ./configure&lt;span class="w"&gt; &lt;/span&gt;--enable-optimizations
 make&lt;span class="w"&gt; &lt;/span&gt;-j&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;install
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
@@ -33,7 +33,7 @@ python3.12&lt;span class="w"&gt; &lt;/span&gt;-m&lt;span class="w"&gt; &lt;/span
 &lt;p&gt;Each time you log in to work with TRex, activate the venv first:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/venv/bin/activate
 &lt;span class="c1"&gt;# To verify:&lt;/span&gt;
-&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.12&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="c1"&gt;# should show /root/venv/bin/python3.12&lt;/span&gt;
+&lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;python3.12&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="c1"&gt;# it should show /root/venv/bin/python3.12&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
 &lt;h3&gt;Installing DOCA-OFED&lt;/h3&gt;
@@ -73,11 +73,21 @@ sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;
 &lt;p&gt;The server takes a few seconds to initialize.&lt;/p&gt;
 &lt;h3&gt;Running a TRex Test Script&lt;/h3&gt;
 &lt;p&gt;From a second terminal (also inside the Python 3.12 venv), run one of the test scripts. For example:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/root/ietf-123-pcpu/tests-trex
-./u1.py
-./u1.py&lt;span class="w"&gt; &lt;/span&gt;--src-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.1.253&lt;span class="w"&gt; &lt;/span&gt;--dst-ip&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;192&lt;/span&gt;.0.2.253&lt;span class="w"&gt; &lt;/span&gt;--pps&lt;span class="w"&gt; &lt;/span&gt;1M&lt;span class="w"&gt; &lt;/span&gt;--frame-size&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1518&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--duration&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--flows-end&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;--runs&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git&lt;span class="w"&gt; &lt;/span&gt;clone&lt;span class="w"&gt; &lt;/span&gt;https://github.com/antonyantony/ietf-123-pcpu&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;
+
+&lt;span class="s2"&gt;cd ietf-123-pcpu/tests-trex&lt;/span&gt;
+&lt;span class="s2"&gt;./u1.py&lt;/span&gt;
+
+&lt;span class="s2"&gt;or&lt;/span&gt;
+
+&lt;span class="s2"&gt;./u1.py --src-ip 192.0.1.253 --dst-ip 192.0.2.253 --pps 1M --frame-size 1518 --flows 2 --duration 10 --flows-end 2 --runs 2&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 
+&lt;p&gt;The script use u1.conf as configuration file, to generate a config template, the TRex server should not be when generating config, otherwise gen-config won't be able to detect nexthop ARP/neighbor MAC address which is used in dst-mac. If the dst-mac or rev-dst-mac address is incorrect the traffic will be dropped with NO ERRROR counters.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;./u1.py --gen-config
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Check the the src/dst, MAC addresses are correct.&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;u1.py&lt;/code&gt; is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.&lt;/p&gt;
 &lt;h2&gt;Appendix A: Mellanox DOCA-OFED Diagnostics&lt;/h2&gt;
 &lt;p&gt;This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.&lt;/p&gt;

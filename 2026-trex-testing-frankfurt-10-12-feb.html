@@ -49,7 +49,7 @@ what ships with Ubuntu 24.04.</p>
 <p><code>wget https://www.python.org/ftp/python/3.12.9/Python-3.12.9.tgz</code></p>
 <p>Extract it, run <code>configure</code>, and install.</p>
 <div class="highlight"><pre><span></span><code>tar<span class="w"> </span>-zxf<span class="w"> </span>Python-3.12.9.tgz
-<span class="nb">cd</span><span class="w">  </span>Python-3.12.9
+<span class="nb">cd</span><span class="w"> </span>Python-3.12.9
 ./configure<span class="w"> </span>--enable-optimizations
 make<span class="w"> </span>-j<span class="w"> </span><span class="m">3</span><span class="w"> </span>install
 </code></pre></div>
@@ -64,7 +64,7 @@ python3.12<span class="w"> </span>-m<span class="w"> </span>venv<span class="w">
 <p>Each time you log in to work with TRex, activate the venv first:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>/root/venv/bin/activate
 <span class="c1"># To verify:</span>
-<span class="nb">type</span><span class="w"> </span>python3.12<span class="w">  </span><span class="c1"># should show /root/venv/bin/python3.12</span>
+<span class="nb">type</span><span class="w"> </span>python3.12<span class="w"> </span><span class="c1"># it should show /root/venv/bin/python3.12</span>
 </code></pre></div>
 
 <h3>Installing DOCA-OFED</h3>
@@ -104,11 +104,21 @@ sysctl<span class="w"> </span>-w<span class="w"> </span>vm.nr_hugepages<span cla
 <p>The server takes a few seconds to initialize.</p>
 <h3>Running a TRex Test Script</h3>
 <p>From a second terminal (also inside the Python 3.12 venv), run one of the test scripts. For example:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>/root/ietf-123-pcpu/tests-trex
-./u1.py
-./u1.py<span class="w"> </span>--src-ip<span class="w"> </span><span class="m">192</span>.0.1.253<span class="w"> </span>--dst-ip<span class="w"> </span><span class="m">192</span>.0.2.253<span class="w"> </span>--pps<span class="w"> </span>1M<span class="w"> </span>--frame-size<span class="w"> </span><span class="m">1518</span><span class="w"> </span>--flows<span class="w"> </span><span class="m">2</span><span class="w"> </span>--duration<span class="w"> </span><span class="m">10</span><span class="w"> </span>--flows-end<span class="w"> </span><span class="m">2</span><span class="w"> </span>--runs<span class="w"> </span><span class="m">2</span>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/antonyantony/ietf-123-pcpu<span class="s2">&quot;</span>
+
+<span class="s2">cd ietf-123-pcpu/tests-trex</span>
+<span class="s2">./u1.py</span>
+
+<span class="s2">or</span>
+
+<span class="s2">./u1.py --src-ip 192.0.1.253 --dst-ip 192.0.2.253 --pps 1M --frame-size 1518 --flows 2 --duration 10 --flows-end 2 --runs 2</span>
 </code></pre></div>
 
+<p>The script use u1.conf as configuration file, to generate a config template, the TRex server should not be when generating config, otherwise gen-config won't be able to detect nexthop ARP/neighbor MAC address which is used in dst-mac. If the dst-mac or rev-dst-mac address is incorrect the traffic will be dropped with NO ERRROR counters.</p>
+<div class="highlight"><pre><span></span><code>./u1.py --gen-config
+</code></pre></div>
+
+<p>Check the the src/dst, MAC addresses are correct.</p>
 <p><code>u1.py</code> is a simple UDP sender/receiver that measures throughput and packet loss. It stores results in JSON, which are later processed with Pandas and plotted using Matplotlib.</p>
 <h2>Appendix A: Mellanox DOCA-OFED Diagnostics</h2>
 <p>This section is only needed if you are troubleshooting your Mellanox NIC setup. If TRex starts and traffic flows, you can skip this.</p>
