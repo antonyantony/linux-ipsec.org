@@ -1,4 +1,4 @@
-Title: 2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)
+Title: 2025 Linux IPsec pCPU testing, (Finland 20 - 26 July)
 Date: 2025-08-15
 Summary: Test performance improvements using pPCPU [RFC9611](https://www.rfc-editor.org/rfc/rfc9611.html) with the Linux Kernel and strongSwan pCPU implementation.
 
