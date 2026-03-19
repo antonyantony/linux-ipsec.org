@@ -1,5 +1,476 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>IPsec and Network Security - research</title><link href="https://antonyantony.github.io/linux-ipsec.org/" rel="alternate"/><link href="https://antonyantony.github.io/linux-ipsec.org/feeds/research.atom.xml" rel="self"/><id>https://antonyantony.github.io/linux-ipsec.org/</id><updated>2026-02-12T00:00:00+00:00</updated><entry><title>2026 TRex Testing (Frankfurt, 10-12 Feb)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html" rel="alternate"/><published>2026-02-12T00:00:00+00:00</published><updated>2026-02-12T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2026-02-12:/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>IPsec and Network Security - research</title><link href="https://antonyantony.github.io/linux-ipsec.org/" rel="alternate"/><link href="https://antonyantony.github.io/linux-ipsec.org/feeds/research.atom.xml" rel="self"/><id>https://antonyantony.github.io/linux-ipsec.org/</id><updated>2026-03-19T00:00:00+00:00</updated><entry><title>2026 TRex and iperf Testing (Dresden, 19 March)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-and-iperf-testing-dresden-19-march.html" rel="alternate"/><published>2026-03-19T00:00:00+00:00</published><updated>2026-03-19T00:00:00+00:00</updated><author><name>Antony Antony</name></author><id>tag:antonyantony.github.io,2026-03-19:/linux-ipsec.org/2026-trex-and-iperf-testing-dresden-19-march.html</id><summary type="html">&lt;p&gt;TRex and iperf3 Testing: Quick comparison 1500 vs 9000 bytes MTU&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Performance benchmarks for an IPsec gateway configured with a single Security
+Association (SA), tested using iperf, gateway to gateway, Trex as forwarding.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;TRex&lt;/strong&gt; — stateless UDP traffic generator, measuring forwarding throughput
+  in Gibps across a range of requested packet rates (pps)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;iperf3&lt;/strong&gt; — measuring TCP and UDP send/receive throughput across a range of
+  target bandwidths&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Tests were conducted with two MTU sizes: &lt;strong&gt;1500&lt;/strong&gt; and &lt;strong&gt;9000&lt;/strong&gt; bytes, with 5
+repeated runs, each 10 seconds duration, per data point to assess consistency.&lt;/p&gt;
+&lt;h2&gt;Test Setup&lt;/h2&gt;
+&lt;p&gt;Two different topologies are used depending on the traffic generator.&lt;/p&gt;
+&lt;h3&gt;iperf3 topology&lt;/h3&gt;
+&lt;p&gt;&lt;em&gt;west&lt;/em&gt; and &lt;em&gt;east&lt;/em&gt; are connected back-to-back using Mellanox ConnectX-7 NICs.
+iperf3 runs on both hosts directly.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;west ──────────────────── east
+      Mellanox ConnectX-7
+       (direct cable)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;TRex topology&lt;/h3&gt;
+&lt;p&gt;&lt;em&gt;sun&lt;/em&gt; is the TRex traffic generator with two ports, one connected to &lt;em&gt;west&lt;/em&gt;
+and one connected to &lt;em&gt;east&lt;/em&gt;. Traffic enters the IPsec gateway on &lt;em&gt;west&lt;/em&gt;,
+traverses the IPsec tunnel, and exits on &lt;em&gt;east&lt;/em&gt; back to &lt;em&gt;sun&lt;/em&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;                 ┌─────────────────────┐
+                 │         DUT         │
+                 │   west ══════ east  │
+                 │    (IPsec tunnel)   │
+                 └──────┬─────────┬─-──┘
+                        │         │
+                   port0 │         │ port1
+                        └────┬────┘
+                             │
+                          sun (TRex)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;A single IPsec SA pair is used throughout all tests.&lt;/p&gt;
+&lt;h2&gt;TRex UDP Forwarding Results&lt;/h2&gt;
+&lt;p&gt;TRex sends UDP traffic at a fixed requested rate (&lt;code&gt;tx_pps_req&lt;/code&gt;) and measures
+actual forwarded throughput (&lt;code&gt;fwd_tx_throughput_gibps&lt;/code&gt;) and received throughput
+(&lt;code&gt;fwd_rx_throughput_gibps&lt;/code&gt;) after the IPsec gateway. Each point shows the best
+and average of 5 runs.&lt;/p&gt;
+&lt;h3&gt;MTU 1500&lt;/h3&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right;"&gt;pps_req&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best TX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best RX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg TX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg RX (Gibps)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;270K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.995&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.878&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.986&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.890&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;280K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.107&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.959&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.095&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;2.984&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;300K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.318&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.176&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.314&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.216&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;310K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.429&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.340&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.426&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.342&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;320K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.542&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.425&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.537&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.440&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;img alt="TRex MTU 1500 — best and average TX/RX throughput" src="https://antonyantony.github.io/linux-ipsec.org/images/20260319-trex-bars-1500.png"&gt;&lt;/p&gt;
+&lt;p&gt;Results are very consistent across runs — best vs average difference is under
+0.015 Gibps — indicating stable forwarding with a single SA at MTU 1500.
+TX throughput slightly exceeds RX, reflecting a small amount of packet loss
+through the gateway.&lt;/p&gt;
+&lt;h3&gt;MTU 9000 (Jumbo Frames)&lt;/h3&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right;"&gt;pps_req&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best TX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best RX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg TX (Gibps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg RX (Gibps)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;170K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.389&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.342&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.367&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.354&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;180K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.078&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.028&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.050&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.001&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;200K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.385&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.116&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.373&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.084&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;210K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.042&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.115&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.038&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.125&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;220K&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.731&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.213&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.716&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.015&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;img alt="TRex MTU 9000 — best and average TX/RX throughput" src="https://antonyantony.github.io/linux-ipsec.org/images/20260319-trex-bars-9000.png"&gt;&lt;/p&gt;
+&lt;p&gt;With jumbo frames the gateway reaches over 14 Gibps TX at 220K pps. However,
+the RX average at 220K drops to 11.015 Gibps (best: 13.213 Gibps), indicating
+significant and inconsistent packet loss at the highest load. The 220K pps
+point is near the saturation limit for this configuration.&lt;/p&gt;
+&lt;h2&gt;iperf3 TCP and UDP Results&lt;/h2&gt;
+&lt;p&gt;iperf3 tests vary the target send bandwidth with 5 runs per point.
+Plots show TCP and UDP sent/received throughput for best and average runs.&lt;/p&gt;
+&lt;h3&gt;MTU 1500&lt;/h3&gt;
+&lt;p&gt;&lt;img alt="iperf3 MTU 1500 — best and average throughput" src="https://antonyantony.github.io/linux-ipsec.org/images/20260319-iperf-bw-mtu1500.png"&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;TCP&lt;/strong&gt; throughput saturates around 4.5 Gbps regardless of the target
+  bandwidth, reflecting the single-SA single-CPU limit at this MTU.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;UDP sent&lt;/strong&gt; keeps climbing toward the target, but &lt;strong&gt;UDP received&lt;/strong&gt; drops off
+  at higher loads, indicating increasing packet loss beyond a ~5–6 Gbps target.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;MTU 9000 (Jumbo Frames)&lt;/h3&gt;
+&lt;p&gt;&lt;img alt="iperf3 MTU 9000 — best and average throughput" src="https://antonyantony.github.io/linux-ipsec.org/images/20260319-iperf-bw-mtu9000.png"&gt;&lt;/p&gt;
+&lt;p&gt;With MTU 9000, TCP scales well with the target bandwidth, reaching up to
+~17 Gbps before becoming inconsistent. The average degrades from 13 Gbps
+target onwards, suggesting the single-SA forwarding limit is being reached.
+UDP with MTU 9000 shows a large gap between sent and received — sent climbs
+freely but received saturates around 9–10 Gbps, indicating significant packet
+loss at higher rates.&lt;/p&gt;
+&lt;h4&gt;iperf3 TCP MTU 9000 — numbers&lt;/h4&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right;"&gt;target&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best TX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best RX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg TX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg RX (Gbps)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;8G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.998&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;9G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.998&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;10G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.999&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;11G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.998&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.997&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.996&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;12G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.998&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.997&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;13G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.541&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;12.540&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;14G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.998&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.333&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.331&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;15G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.186&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.185&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;16G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.120&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.119&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;17G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.254&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.253&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;18G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.600&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.600&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.099&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.098&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;19G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;17.379&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;17.378&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.112&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.112&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;20G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.660&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.656&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.179&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.177&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4&gt;iperf3 UDP MTU 9000 — numbers&lt;/h4&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: right;"&gt;target&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best TX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;best RX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg TX (Gbps)&lt;/th&gt;
+&lt;th style="text-align: right;"&gt;avg RX (Gbps)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;8G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.466&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;6.706&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;4.239&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;3.733&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;9G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.300&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;5.709&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;4.817&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;10G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.476&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;6.170&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;4.632&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;11G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.201&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;5.983&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;4.210&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;12G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;11.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.569&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.555&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;7.376&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;13G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.000&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.773&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.165&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;5.538&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;14G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.999&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.019&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;13.932&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.022&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;15G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.992&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.245&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;14.857&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.187&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;16G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.755&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.333&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.021&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.140&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;17G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.910&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.338&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.053&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.175&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;18G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;17.977&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.374&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.628&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.844&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;19G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;17.787&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.137&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;16.285&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;9.595&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: right;"&gt;20G&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;19.998&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;10.269&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;15.167&lt;/td&gt;
+&lt;td style="text-align: right;"&gt;8.201&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;UDP RX saturates around 9–10 Gbps regardless of how high the sender pushes,
+confirming the single-SA forwarding limit for UDP at MTU 9000.&lt;/p&gt;
+&lt;h2&gt;Summary&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Test&lt;/th&gt;
+&lt;th&gt;MTU&lt;/th&gt;
+&lt;th&gt;Peak RX (best)&lt;/th&gt;
+&lt;th&gt;Notes&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;TRex UDP&lt;/td&gt;
+&lt;td&gt;1500&lt;/td&gt;
+&lt;td&gt;3.42 Gibps&lt;/td&gt;
+&lt;td&gt;Stable, &amp;lt; 0.02 Gibps variance&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;TRex UDP&lt;/td&gt;
+&lt;td&gt;9000&lt;/td&gt;
+&lt;td&gt;13.21 Gibps&lt;/td&gt;
+&lt;td&gt;Loss starts at 220K pps&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;iperf TCP&lt;/td&gt;
+&lt;td&gt;1500&lt;/td&gt;
+&lt;td&gt;~4.5 Gbps&lt;/td&gt;
+&lt;td&gt;CPU-bound saturation&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;iperf UDP&lt;/td&gt;
+&lt;td&gt;1500&lt;/td&gt;
+&lt;td&gt;~5.5 Gbps&lt;/td&gt;
+&lt;td&gt;Loss above 6 Gbps target&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;iperf TCP&lt;/td&gt;
+&lt;td&gt;9000&lt;/td&gt;
+&lt;td&gt;~17.4 Gbps&lt;/td&gt;
+&lt;td&gt;Inconsistent above 13 Gbps target&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;iperf UDP&lt;/td&gt;
+&lt;td&gt;9000&lt;/td&gt;
+&lt;td&gt;~10.4 Gbps&lt;/td&gt;
+&lt;td&gt;RX saturates ~9–10 Gbps&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;With a single SA, all IPsec processing is handled by one CPU.
+Jumbo frames (MTU 9000) substantially improve throughput by reducing per-packet
+overhead, but the single-SA single-CPU bottleneck remains the limiting factor.&lt;/p&gt;
+&lt;h2&gt;Test Notes&lt;/h2&gt;
+&lt;p&gt;Packet captures and test commands recorded during the test session:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="mf"&gt;9000&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;MTU&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;UDP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;test&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;03&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55.677864&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcdfb55ce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xd6a4&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;8956&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;03&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55.677869&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcdfb55ce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xd6a5&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;8956&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;03&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55.677876&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcdfb55ce&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xd6a6&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;8956&lt;/span&gt;
+
+&lt;span class="n"&gt;NO&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;fragment&lt;/span&gt;
+&lt;span class="n"&gt;Neither&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;CPUs&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;are&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;100&lt;/span&gt;&lt;span class="err"&gt;%&lt;/span&gt;
+
+&lt;span class="n"&gt;MTU&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1500&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;UDP&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;32&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;01.137179&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcd9ae971&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x10de0&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1456&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;32&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;01.137181&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcd9ae971&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x10de1&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1456&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;32&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;01.137183&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcd9ae971&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x10de2&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1456&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;32&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;01.137185&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xcd9ae971&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x10de3&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1456&lt;/span&gt;
+
+&lt;span class="n"&gt;with&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;tcp&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916940&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23a&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916945&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23b&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916937&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.0.2.254.5201&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.0.1.254.55136&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;Flags&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;[&lt;/span&gt;&lt;span class="mf"&gt;.&lt;/span&gt;&lt;span class="err"&gt;]&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ack&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;3507262502&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;win&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;31043&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;options&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;[&lt;/span&gt;&lt;span class="n"&gt;nop&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;nop&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;TS&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;val&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;3598111131&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ecr&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1625372311&lt;/span&gt;&lt;span class="err"&gt;]&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916948&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23c&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916952&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23d&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916955&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23e&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916957&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x23f&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;06&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;55&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;05.916960&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xc129b223&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x240&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+
+&lt;span class="n"&gt;Trex&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;UDP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1500&lt;/span&gt;
+&lt;span class="mf"&gt;.&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;u1&lt;/span&gt;&lt;span class="mf"&gt;.&lt;/span&gt;&lt;span class="n"&gt;py&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;pps&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.27&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;pps&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.28&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;pps&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.3&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;pps&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.31&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;pps&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;0.32&lt;/span&gt;&lt;span class="n"&gt;M&lt;/span&gt;&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;frame&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1460&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;duration&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;results&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;file&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;$&lt;/span&gt;&lt;span class="n"&gt;SUBDIR&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;trex&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;1500.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;
+
+&lt;span class="mf"&gt;07&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;14&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;42.153127&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;53&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;30&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;52&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;f0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ethertype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IPv4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x0800&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1514&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xca8130f4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x35e83&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;07&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;14&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;42.153129&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;53&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;30&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;52&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;f0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ethertype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IPv4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x0800&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1514&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xca8130f4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x35e84&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;07&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;14&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;42.153131&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;53&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;30&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;52&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;f0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ethertype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IPv4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x0800&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1514&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xca8130f4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x35e85&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;07&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;14&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;42.153136&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;53&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;30&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;52&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;f0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ethertype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IPv4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x0800&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1514&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xca8130f4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x35e86&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+&lt;span class="mf"&gt;07&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;14&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;42.153137&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;53&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;30&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;10&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;70&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;fd&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;87&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;52&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="n"&gt;f0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ethertype&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;IPv4&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x0800&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1514&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.45&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.1.2.23&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;ESP&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;spi&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;xca8130f4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="n"&gt;seq&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mf"&gt;0&lt;/span&gt;&lt;span class="n"&gt;x35e87&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="n"&gt;gth&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;1480&lt;/span&gt;
+
+&lt;span class="n"&gt;iperf&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;command&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;line&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="n"&gt;used&lt;/span&gt;
+&lt;span class="n"&gt;iperf3&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;2&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="mf"&gt;192.0.2.254&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;$&lt;/span&gt;&lt;span class="n"&gt;UDP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;$&lt;/span&gt;&lt;span class="n"&gt;TP&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;t&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;${&lt;/span&gt;&lt;span class="n"&gt;D&lt;/span&gt;&lt;span class="err"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="err"&gt;${&lt;/span&gt;&lt;span class="n"&gt;PROTO&lt;/span&gt;&lt;span class="err"&gt;}&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="err"&gt;${&lt;/span&gt;&lt;span class="n"&gt;MTU&lt;/span&gt;&lt;span class="err"&gt;}&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="err"&gt;${&lt;/span&gt;&lt;span class="n"&gt;TP&lt;/span&gt;&lt;span class="err"&gt;}&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="err"&gt;${&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="err"&gt;}&lt;/span&gt;&lt;span class="mf"&gt;.&lt;/span&gt;&lt;span class="n"&gt;json&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2026 TRex Testing (Frankfurt, 10-12 Feb)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html" rel="alternate"/><published>2026-02-12T00:00:00+00:00</published><updated>2026-02-12T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2026-02-12:/linux-ipsec.org/2026-trex-testing-frankfurt-10-12-feb.html</id><summary type="html">&lt;p&gt;TRex Testing: A Quick Start on Ubuntu 24.04&lt;/p&gt;</summary><content type="html">&lt;h2&gt;Overview&lt;/h2&gt;
 &lt;p&gt;This guide provides a quick start for installing and testing TRex (Cisco's Traffic Generator) on Ubuntu 24.04 (Noble Numbat) LTS&lt;/p&gt;
 &lt;h2&gt;Prerequisites&lt;/h2&gt;
 &lt;p&gt;Before installing TRex, ensure your system meets the following requirements:&lt;/p&gt;
@@ -202,7 +673,7 @@ for bulk forwarding, to improve forwarding data path performance, especially IPs
 Tests use developmental kernel versions v6.16 and v6.17.&lt;/p&gt;
 &lt;h2&gt;Test Setup&lt;/h2&gt;
 &lt;p&gt;The test setup is the same as described in
-&lt;a href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html"&gt;2025 Linux IPsec pCPU testing (Madrid)&lt;/a&gt;.&lt;/p&gt;
+&lt;a href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-finland-20-26-july.html"&gt;2025 Linux IPsec pCPU testing (Madrid)&lt;/a&gt;.&lt;/p&gt;
 &lt;h2&gt;Flowtable Bulking Testing Results&lt;/h2&gt;
 &lt;p&gt;All tests here are using smaller ethernet frame sizes, i.e. 128 bytes due to a limitation of the system.  This is to show the scaling properties and later to be tested with 1518 byte frames.&lt;/p&gt;
 &lt;h3&gt;Forwarding Tests (no IPsec)&lt;/h3&gt;
@@ -438,7 +909,7 @@ sysctl&lt;span class="w"&gt; &lt;/span&gt;-w&lt;span class="w"&gt; &lt;/span&gt;
 &lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.1&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_1&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redwest&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
 
 &lt;span class="n"&gt;ConnectX5&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;rev&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="w"&gt;        &lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mst&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;mt4121_pciconf0&lt;/span&gt;&lt;span class="w"&gt;      &lt;/span&gt;&lt;span class="mi"&gt;01&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="mf"&gt;00.0&lt;/span&gt;&lt;span class="w"&gt;   &lt;/span&gt;&lt;span class="n"&gt;mlx5_0&lt;/span&gt;&lt;span class="w"&gt;          &lt;/span&gt;&lt;span class="n"&gt;net&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;redeast&lt;/span&gt;&lt;span class="w"&gt;                             &lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 Linux IPsec pCPU testing, (Madrid 20 - 26 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html" rel="alternate"/><published>2025-08-15T00:00:00+00:00</published><updated>2025-08-15T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-15:/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-madrid-20-26-july.html</id><summary type="html">&lt;p&gt;Test performance improvements using pPCPU &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt; with the Linux Kernel and strongSwan pCPU implementation.&lt;/p&gt;</summary><content type="html">&lt;p&gt;The testing started as part of IETF 123 Hackathon and continued since then.&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content><category term="research"/></entry><entry><title>2025 Linux IPsec pCPU testing, (Finland 20 - 26 July)</title><link href="https://antonyantony.github.io/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-finland-20-26-july.html" rel="alternate"/><published>2025-08-15T00:00:00+00:00</published><updated>2025-08-15T00:00:00+00:00</updated><author><name/></author><id>tag:antonyantony.github.io,2025-08-15:/linux-ipsec.org/2025-linux-ipsec-pcpu-testing-finland-20-26-july.html</id><summary type="html">&lt;p&gt;Test performance improvements using pPCPU &lt;a href="https://www.rfc-editor.org/rfc/rfc9611.html"&gt;RFC9611&lt;/a&gt; with the Linux Kernel and strongSwan pCPU implementation.&lt;/p&gt;</summary><content type="html">&lt;p&gt;The testing started as part of IETF 123 Hackathon and continued since then.&lt;/p&gt;
 &lt;h2&gt;Test setup&lt;/h2&gt;
 &lt;p&gt;The initial test setup have four hosts or servers. Here, &lt;em&gt;west&lt;/em&gt; and &lt;em&gt;east&lt;/em&gt; function as IPsec gateways, also known as black servers. Meanwhile, &lt;em&gt;sunseti&lt;/em&gt; and &lt;em&gt;sunrise&lt;/em&gt; act as traffic generators or receivers, referred to as red servers.&lt;/p&gt;
 &lt;pre&gt;

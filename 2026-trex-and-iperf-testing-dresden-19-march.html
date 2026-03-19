@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>IPsec and Network Security - 2026 TRex and iperf Testing (Dresden, 19 March)</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./output.css" />
+    <link rel="stylesheet" type="text/css" href="./highlights.css" />
+    <link rel="icon" type="image/png" href="./images/favicon-192x192.png">
+
+
+
+
+  </head>
+
+  <body class="bg-slate-300 dark:bg-gray-800 text-black dark:text-neutral-200 text-xl">
+    <div class="px-16 lg:px-32 2xl:px-80">
+<header class="flex flex-row my-32">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <nav class="flex-grow flex flex-row-reverse text-xl my-auto">
+    <a class="p-3 no-underline hover:underline" href="./category/conferences">Conferences</a>
+    <a class="p-3 no-underline hover:underline" href="./category/research">Research</a>
+    <a class="p-3 no-underline hover:underline" href=".">Home</a>
+  </nav>
+</header>      <main>
+<article>
+  <header>
+    <h2>
+      2026 TRex  and iperf Testing (Dresden, 19 March)
+    </h2>
+  </header>
+  <h2>Overview</h2>
+<p>Performance benchmarks for an IPsec gateway configured with a single Security
+Association (SA), tested using iperf, gateway to gateway, Trex as forwarding.</p>
+<ul>
+<li><strong>TRex</strong> — stateless UDP traffic generator, measuring forwarding throughput
+  in Gibps across a range of requested packet rates (pps)</li>
+<li><strong>iperf3</strong> — measuring TCP and UDP send/receive throughput across a range of
+  target bandwidths</li>
+</ul>
+<p>Tests were conducted with two MTU sizes: <strong>1500</strong> and <strong>9000</strong> bytes, with 5
+repeated runs, each 10 seconds duration, per data point to assess consistency.</p>
+<h2>Test Setup</h2>
+<p>Two different topologies are used depending on the traffic generator.</p>
+<h3>iperf3 topology</h3>
+<p><em>west</em> and <em>east</em> are connected back-to-back using Mellanox ConnectX-7 NICs.
+iperf3 runs on both hosts directly.</p>
+<div class="highlight"><pre><span></span><code>west ──────────────────── east
+      Mellanox ConnectX-7
+       (direct cable)
+</code></pre></div>
+
+<h3>TRex topology</h3>
+<p><em>sun</em> is the TRex traffic generator with two ports, one connected to <em>west</em>
+and one connected to <em>east</em>. Traffic enters the IPsec gateway on <em>west</em>,
+traverses the IPsec tunnel, and exits on <em>east</em> back to <em>sun</em>.</p>
+<div class="highlight"><pre><span></span><code>                 ┌─────────────────────┐
+                 │         DUT         │
+                 │   west ══════ east  │
+                 │    (IPsec tunnel)   │
+                 └──────┬─────────┬─-──┘
+                        │         │
+                   port0 │         │ port1
+                        └────┬────┘
+                             │
+                          sun (TRex)
+</code></pre></div>
+
+<p>A single IPsec SA pair is used throughout all tests.</p>
+<h2>TRex UDP Forwarding Results</h2>
+<p>TRex sends UDP traffic at a fixed requested rate (<code>tx_pps_req</code>) and measures
+actual forwarded throughput (<code>fwd_tx_throughput_gibps</code>) and received throughput
+(<code>fwd_rx_throughput_gibps</code>) after the IPsec gateway. Each point shows the best
+and average of 5 runs.</p>
+<h3>MTU 1500</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">pps_req</th>
+<th style="text-align: right;">best TX (Gibps)</th>
+<th style="text-align: right;">best RX (Gibps)</th>
+<th style="text-align: right;">avg TX (Gibps)</th>
+<th style="text-align: right;">avg RX (Gibps)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">270K</td>
+<td style="text-align: right;">2.995</td>
+<td style="text-align: right;">2.878</td>
+<td style="text-align: right;">2.986</td>
+<td style="text-align: right;">2.890</td>
+</tr>
+<tr>
+<td style="text-align: right;">280K</td>
+<td style="text-align: right;">3.107</td>
+<td style="text-align: right;">2.959</td>
+<td style="text-align: right;">3.095</td>
+<td style="text-align: right;">2.984</td>
+</tr>
+<tr>
+<td style="text-align: right;">300K</td>
+<td style="text-align: right;">3.318</td>
+<td style="text-align: right;">3.176</td>
+<td style="text-align: right;">3.314</td>
+<td style="text-align: right;">3.216</td>
+</tr>
+<tr>
+<td style="text-align: right;">310K</td>
+<td style="text-align: right;">3.429</td>
+<td style="text-align: right;">3.340</td>
+<td style="text-align: right;">3.426</td>
+<td style="text-align: right;">3.342</td>
+</tr>
+<tr>
+<td style="text-align: right;">320K</td>
+<td style="text-align: right;">3.542</td>
+<td style="text-align: right;">3.425</td>
+<td style="text-align: right;">3.537</td>
+<td style="text-align: right;">3.440</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="TRex MTU 1500 — best and average TX/RX throughput" src="./images/20260319-trex-bars-1500.png"></p>
+<p>Results are very consistent across runs — best vs average difference is under
+0.015 Gibps — indicating stable forwarding with a single SA at MTU 1500.
+TX throughput slightly exceeds RX, reflecting a small amount of packet loss
+through the gateway.</p>
+<h3>MTU 9000 (Jumbo Frames)</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">pps_req</th>
+<th style="text-align: right;">best TX (Gibps)</th>
+<th style="text-align: right;">best RX (Gibps)</th>
+<th style="text-align: right;">avg TX (Gibps)</th>
+<th style="text-align: right;">avg RX (Gibps)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">170K</td>
+<td style="text-align: right;">11.389</td>
+<td style="text-align: right;">11.342</td>
+<td style="text-align: right;">11.367</td>
+<td style="text-align: right;">11.354</td>
+</tr>
+<tr>
+<td style="text-align: right;">180K</td>
+<td style="text-align: right;">12.078</td>
+<td style="text-align: right;">12.028</td>
+<td style="text-align: right;">12.050</td>
+<td style="text-align: right;">12.001</td>
+</tr>
+<tr>
+<td style="text-align: right;">200K</td>
+<td style="text-align: right;">13.385</td>
+<td style="text-align: right;">13.116</td>
+<td style="text-align: right;">13.373</td>
+<td style="text-align: right;">13.084</td>
+</tr>
+<tr>
+<td style="text-align: right;">210K</td>
+<td style="text-align: right;">14.042</td>
+<td style="text-align: right;">13.115</td>
+<td style="text-align: right;">14.038</td>
+<td style="text-align: right;">13.125</td>
+</tr>
+<tr>
+<td style="text-align: right;">220K</td>
+<td style="text-align: right;">14.731</td>
+<td style="text-align: right;">13.213</td>
+<td style="text-align: right;">14.716</td>
+<td style="text-align: right;">11.015</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="TRex MTU 9000 — best and average TX/RX throughput" src="./images/20260319-trex-bars-9000.png"></p>
+<p>With jumbo frames the gateway reaches over 14 Gibps TX at 220K pps. However,
+the RX average at 220K drops to 11.015 Gibps (best: 13.213 Gibps), indicating
+significant and inconsistent packet loss at the highest load. The 220K pps
+point is near the saturation limit for this configuration.</p>
+<h2>iperf3 TCP and UDP Results</h2>
+<p>iperf3 tests vary the target send bandwidth with 5 runs per point.
+Plots show TCP and UDP sent/received throughput for best and average runs.</p>
+<h3>MTU 1500</h3>
+<p><img alt="iperf3 MTU 1500 — best and average throughput" src="./images/20260319-iperf-bw-mtu1500.png"></p>
+<ul>
+<li><strong>TCP</strong> throughput saturates around 4.5 Gbps regardless of the target
+  bandwidth, reflecting the single-SA single-CPU limit at this MTU.</li>
+<li><strong>UDP sent</strong> keeps climbing toward the target, but <strong>UDP received</strong> drops off
+  at higher loads, indicating increasing packet loss beyond a ~5–6 Gbps target.</li>
+</ul>
+<h3>MTU 9000 (Jumbo Frames)</h3>
+<p><img alt="iperf3 MTU 9000 — best and average throughput" src="./images/20260319-iperf-bw-mtu9000.png"></p>
+<p>With MTU 9000, TCP scales well with the target bandwidth, reaching up to
+~17 Gbps before becoming inconsistent. The average degrades from 13 Gbps
+target onwards, suggesting the single-SA forwarding limit is being reached.
+UDP with MTU 9000 shows a large gap between sent and received — sent climbs
+freely but received saturates around 9–10 Gbps, indicating significant packet
+loss at higher rates.</p>
+<h4>iperf3 TCP MTU 9000 — numbers</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">target</th>
+<th style="text-align: right;">best TX (Gbps)</th>
+<th style="text-align: right;">best RX (Gbps)</th>
+<th style="text-align: right;">avg TX (Gbps)</th>
+<th style="text-align: right;">avg RX (Gbps)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">8G</td>
+<td style="text-align: right;">8.000</td>
+<td style="text-align: right;">7.999</td>
+<td style="text-align: right;">7.999</td>
+<td style="text-align: right;">7.998</td>
+</tr>
+<tr>
+<td style="text-align: right;">9G</td>
+<td style="text-align: right;">9.000</td>
+<td style="text-align: right;">8.999</td>
+<td style="text-align: right;">8.999</td>
+<td style="text-align: right;">8.998</td>
+</tr>
+<tr>
+<td style="text-align: right;">10G</td>
+<td style="text-align: right;">10.000</td>
+<td style="text-align: right;">10.000</td>
+<td style="text-align: right;">9.999</td>
+<td style="text-align: right;">9.999</td>
+</tr>
+<tr>
+<td style="text-align: right;">11G</td>
+<td style="text-align: right;">11.000</td>
+<td style="text-align: right;">10.998</td>
+<td style="text-align: right;">10.997</td>
+<td style="text-align: right;">10.996</td>
+</tr>
+<tr>
+<td style="text-align: right;">12G</td>
+<td style="text-align: right;">12.000</td>
+<td style="text-align: right;">12.000</td>
+<td style="text-align: right;">11.998</td>
+<td style="text-align: right;">11.997</td>
+</tr>
+<tr>
+<td style="text-align: right;">13G</td>
+<td style="text-align: right;">12.999</td>
+<td style="text-align: right;">12.999</td>
+<td style="text-align: right;">12.541</td>
+<td style="text-align: right;">12.540</td>
+</tr>
+<tr>
+<td style="text-align: right;">14G</td>
+<td style="text-align: right;">13.999</td>
+<td style="text-align: right;">13.998</td>
+<td style="text-align: right;">13.333</td>
+<td style="text-align: right;">13.331</td>
+</tr>
+<tr>
+<td style="text-align: right;">15G</td>
+<td style="text-align: right;">15.000</td>
+<td style="text-align: right;">14.999</td>
+<td style="text-align: right;">14.186</td>
+<td style="text-align: right;">14.185</td>
+</tr>
+<tr>
+<td style="text-align: right;">16G</td>
+<td style="text-align: right;">15.999</td>
+<td style="text-align: right;">15.999</td>
+<td style="text-align: right;">14.120</td>
+<td style="text-align: right;">14.119</td>
+</tr>
+<tr>
+<td style="text-align: right;">17G</td>
+<td style="text-align: right;">16.999</td>
+<td style="text-align: right;">16.999</td>
+<td style="text-align: right;">16.254</td>
+<td style="text-align: right;">16.253</td>
+</tr>
+<tr>
+<td style="text-align: right;">18G</td>
+<td style="text-align: right;">13.600</td>
+<td style="text-align: right;">13.600</td>
+<td style="text-align: right;">13.099</td>
+<td style="text-align: right;">13.098</td>
+</tr>
+<tr>
+<td style="text-align: right;">19G</td>
+<td style="text-align: right;">17.379</td>
+<td style="text-align: right;">17.378</td>
+<td style="text-align: right;">14.112</td>
+<td style="text-align: right;">14.112</td>
+</tr>
+<tr>
+<td style="text-align: right;">20G</td>
+<td style="text-align: right;">16.660</td>
+<td style="text-align: right;">16.656</td>
+<td style="text-align: right;">15.179</td>
+<td style="text-align: right;">15.177</td>
+</tr>
+</tbody>
+</table>
+<h4>iperf3 UDP MTU 9000 — numbers</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">target</th>
+<th style="text-align: right;">best TX (Gbps)</th>
+<th style="text-align: right;">best RX (Gbps)</th>
+<th style="text-align: right;">avg TX (Gbps)</th>
+<th style="text-align: right;">avg RX (Gbps)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">8G</td>
+<td style="text-align: right;">7.466</td>
+<td style="text-align: right;">6.706</td>
+<td style="text-align: right;">4.239</td>
+<td style="text-align: right;">3.733</td>
+</tr>
+<tr>
+<td style="text-align: right;">9G</td>
+<td style="text-align: right;">8.999</td>
+<td style="text-align: right;">7.300</td>
+<td style="text-align: right;">5.709</td>
+<td style="text-align: right;">4.817</td>
+</tr>
+<tr>
+<td style="text-align: right;">10G</td>
+<td style="text-align: right;">9.999</td>
+<td style="text-align: right;">7.476</td>
+<td style="text-align: right;">6.170</td>
+<td style="text-align: right;">4.632</td>
+</tr>
+<tr>
+<td style="text-align: right;">11G</td>
+<td style="text-align: right;">11.000</td>
+<td style="text-align: right;">7.201</td>
+<td style="text-align: right;">5.983</td>
+<td style="text-align: right;">4.210</td>
+</tr>
+<tr>
+<td style="text-align: right;">12G</td>
+<td style="text-align: right;">11.999</td>
+<td style="text-align: right;">8.569</td>
+<td style="text-align: right;">10.555</td>
+<td style="text-align: right;">7.376</td>
+</tr>
+<tr>
+<td style="text-align: right;">13G</td>
+<td style="text-align: right;">13.000</td>
+<td style="text-align: right;">8.773</td>
+<td style="text-align: right;">8.165</td>
+<td style="text-align: right;">5.538</td>
+</tr>
+<tr>
+<td style="text-align: right;">14G</td>
+<td style="text-align: right;">13.999</td>
+<td style="text-align: right;">9.019</td>
+<td style="text-align: right;">13.932</td>
+<td style="text-align: right;">9.022</td>
+</tr>
+<tr>
+<td style="text-align: right;">15G</td>
+<td style="text-align: right;">14.992</td>
+<td style="text-align: right;">9.245</td>
+<td style="text-align: right;">14.857</td>
+<td style="text-align: right;">9.187</td>
+</tr>
+<tr>
+<td style="text-align: right;">16G</td>
+<td style="text-align: right;">15.755</td>
+<td style="text-align: right;">9.333</td>
+<td style="text-align: right;">15.021</td>
+<td style="text-align: right;">9.140</td>
+</tr>
+<tr>
+<td style="text-align: right;">17G</td>
+<td style="text-align: right;">15.910</td>
+<td style="text-align: right;">9.338</td>
+<td style="text-align: right;">15.053</td>
+<td style="text-align: right;">9.175</td>
+</tr>
+<tr>
+<td style="text-align: right;">18G</td>
+<td style="text-align: right;">17.977</td>
+<td style="text-align: right;">10.374</td>
+<td style="text-align: right;">16.628</td>
+<td style="text-align: right;">9.844</td>
+</tr>
+<tr>
+<td style="text-align: right;">19G</td>
+<td style="text-align: right;">17.787</td>
+<td style="text-align: right;">10.137</td>
+<td style="text-align: right;">16.285</td>
+<td style="text-align: right;">9.595</td>
+</tr>
+<tr>
+<td style="text-align: right;">20G</td>
+<td style="text-align: right;">19.998</td>
+<td style="text-align: right;">10.269</td>
+<td style="text-align: right;">15.167</td>
+<td style="text-align: right;">8.201</td>
+</tr>
+</tbody>
+</table>
+<p>UDP RX saturates around 9–10 Gbps regardless of how high the sender pushes,
+confirming the single-SA forwarding limit for UDP at MTU 9000.</p>
+<h2>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>MTU</th>
+<th>Peak RX (best)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TRex UDP</td>
+<td>1500</td>
+<td>3.42 Gibps</td>
+<td>Stable, &lt; 0.02 Gibps variance</td>
+</tr>
+<tr>
+<td>TRex UDP</td>
+<td>9000</td>
+<td>13.21 Gibps</td>
+<td>Loss starts at 220K pps</td>
+</tr>
+<tr>
+<td>iperf TCP</td>
+<td>1500</td>
+<td>~4.5 Gbps</td>
+<td>CPU-bound saturation</td>
+</tr>
+<tr>
+<td>iperf UDP</td>
+<td>1500</td>
+<td>~5.5 Gbps</td>
+<td>Loss above 6 Gbps target</td>
+</tr>
+<tr>
+<td>iperf TCP</td>
+<td>9000</td>
+<td>~17.4 Gbps</td>
+<td>Inconsistent above 13 Gbps target</td>
+</tr>
+<tr>
+<td>iperf UDP</td>
+<td>9000</td>
+<td>~10.4 Gbps</td>
+<td>RX saturates ~9–10 Gbps</td>
+</tr>
+</tbody>
+</table>
+<p>With a single SA, all IPsec processing is handled by one CPU.
+Jumbo frames (MTU 9000) substantially improve throughput by reducing per-packet
+overhead, but the single-SA single-CPU bottleneck remains the limiting factor.</p>
+<h2>Test Notes</h2>
+<p>Packet captures and test commands recorded during the test session:</p>
+<div class="highlight"><pre><span></span><code><span class="mf">9000</span><span class="w"> </span><span class="n">MTU</span><span class="w"> </span><span class="n">UDP</span><span class="w"> </span><span class="n">test</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">03</span><span class="p">:</span><span class="mf">55.677864</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcdfb55ce</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">xd6a4</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">8956</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">03</span><span class="p">:</span><span class="mf">55.677869</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcdfb55ce</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">xd6a5</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">8956</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">03</span><span class="p">:</span><span class="mf">55.677876</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcdfb55ce</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">xd6a6</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">8956</span>
+
+<span class="n">NO</span><span class="w"> </span><span class="n">ESP</span><span class="w"> </span><span class="n">fragment</span>
+<span class="n">Neither</span><span class="w"> </span><span class="n">CPUs</span><span class="w"> </span><span class="n">are</span><span class="w"> </span><span class="mf">100</span><span class="err">%</span>
+
+<span class="n">MTU</span><span class="w"> </span><span class="mf">1500</span><span class="w"> </span><span class="n">UDP</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">32</span><span class="p">:</span><span class="mf">01.137179</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcd9ae971</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x10de0</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1456</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">32</span><span class="p">:</span><span class="mf">01.137181</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcd9ae971</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x10de1</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1456</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">32</span><span class="p">:</span><span class="mf">01.137183</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcd9ae971</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x10de2</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1456</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">32</span><span class="p">:</span><span class="mf">01.137185</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xcd9ae971</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x10de3</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1456</span>
+
+<span class="n">with</span><span class="w"> </span><span class="n">tcp</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916940</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23a</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916945</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23b</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916937</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.0.2.254.5201</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.0.1.254.55136</span><span class="p">:</span><span class="w"> </span><span class="n">Flags</span><span class="w"> </span><span class="err">[</span><span class="mf">.</span><span class="err">]</span><span class="p">,</span><span class="w"> </span><span class="n">ack</span><span class="w"> </span><span class="mf">3507262502</span><span class="p">,</span><span class="w"> </span><span class="n">win</span><span class="w"> </span><span class="mf">31043</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="err">[</span><span class="n">nop</span><span class="p">,</span><span class="n">nop</span><span class="p">,</span><span class="n">TS</span><span class="w"> </span><span class="nb">val</span><span class="w"> </span><span class="mf">3598111131</span><span class="w"> </span><span class="n">ecr</span><span class="w"> </span><span class="mf">1625372311</span><span class="err">]</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">0</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916948</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23c</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916952</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23d</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916955</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23e</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916957</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x23f</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">06</span><span class="p">:</span><span class="mf">55</span><span class="p">:</span><span class="mf">05.916960</span><span class="w"> </span><span class="n">IP</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xc129b223</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x240</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+
+<span class="n">Trex</span><span class="w"> </span><span class="n">UDP</span><span class="w"> </span><span class="mf">1500</span>
+<span class="mf">.</span><span class="o">/</span><span class="n">u1</span><span class="mf">.</span><span class="n">py</span><span class="w"> </span><span class="o">--</span><span class="n">pps</span><span class="w"> </span><span class="mf">0.27</span><span class="n">M</span><span class="w"> </span><span class="o">--</span><span class="n">pps</span><span class="w"> </span><span class="mf">0.28</span><span class="n">M</span><span class="w">  </span><span class="o">--</span><span class="n">pps</span><span class="w"> </span><span class="mf">0.3</span><span class="n">M</span><span class="w"> </span><span class="o">--</span><span class="n">pps</span><span class="w"> </span><span class="mf">0.31</span><span class="n">M</span><span class="w"> </span><span class="o">--</span><span class="n">pps</span><span class="w"> </span><span class="mf">0.32</span><span class="n">M</span><span class="w">  </span><span class="o">--</span><span class="n">frame</span><span class="o">-</span><span class="n">size</span><span class="w"> </span><span class="mf">1460</span><span class="w"> </span><span class="o">--</span><span class="n">duration</span><span class="w"> </span><span class="mf">10</span><span class="w"> </span><span class="o">--</span><span class="n">results</span><span class="o">-</span><span class="n">file</span><span class="w"> </span><span class="err">$</span><span class="n">SUBDIR</span><span class="o">/</span><span class="n">trex</span><span class="o">-</span><span class="mf">1500.</span><span class="n">json</span>
+
+<span class="mf">07</span><span class="p">:</span><span class="mf">14</span><span class="p">:</span><span class="mf">42.153127</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">53</span><span class="p">:</span><span class="mf">30</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">52</span><span class="p">:</span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="n">ethertype</span><span class="w"> </span><span class="n">IPv4</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="n">x0800</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1514</span><span class="p">:</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xca8130f4</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x35e83</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">07</span><span class="p">:</span><span class="mf">14</span><span class="p">:</span><span class="mf">42.153129</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">53</span><span class="p">:</span><span class="mf">30</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">52</span><span class="p">:</span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="n">ethertype</span><span class="w"> </span><span class="n">IPv4</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="n">x0800</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1514</span><span class="p">:</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xca8130f4</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x35e84</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">07</span><span class="p">:</span><span class="mf">14</span><span class="p">:</span><span class="mf">42.153131</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">53</span><span class="p">:</span><span class="mf">30</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">52</span><span class="p">:</span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="n">ethertype</span><span class="w"> </span><span class="n">IPv4</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="n">x0800</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1514</span><span class="p">:</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xca8130f4</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x35e85</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">07</span><span class="p">:</span><span class="mf">14</span><span class="p">:</span><span class="mf">42.153136</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">53</span><span class="p">:</span><span class="mf">30</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">52</span><span class="p">:</span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="n">ethertype</span><span class="w"> </span><span class="n">IPv4</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="n">x0800</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1514</span><span class="p">:</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xca8130f4</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x35e86</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+<span class="mf">07</span><span class="p">:</span><span class="mf">14</span><span class="p">:</span><span class="mf">42.153137</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">53</span><span class="p">:</span><span class="mf">30</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">:</span><span class="mf">70</span><span class="p">:</span><span class="n">fd</span><span class="p">:</span><span class="mf">87</span><span class="p">:</span><span class="mf">52</span><span class="p">:</span><span class="n">f0</span><span class="p">,</span><span class="w"> </span><span class="n">ethertype</span><span class="w"> </span><span class="n">IPv4</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="n">x0800</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1514</span><span class="p">:</span><span class="w"> </span><span class="mf">192.1.2.45</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">192.1.2.23</span><span class="p">:</span><span class="w"> </span><span class="n">ESP</span><span class="p">(</span><span class="n">spi</span><span class="o">=</span><span class="mf">0</span><span class="n">xca8130f4</span><span class="p">,</span><span class="n">seq</span><span class="o">=</span><span class="mf">0</span><span class="n">x35e87</span><span class="p">),</span><span class="w"> </span><span class="nb">len</span><span class="n">gth</span><span class="w"> </span><span class="mf">1480</span>
+
+<span class="n">iperf</span><span class="w"> </span><span class="n">command</span><span class="w"> </span><span class="n">line</span><span class="w"> </span><span class="n">used</span>
+<span class="n">iperf3</span><span class="w"> </span><span class="o">-</span><span class="n">i</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="o">-</span><span class="n">c</span><span class="w"> </span><span class="mf">192.0.2.254</span><span class="w"> </span><span class="err">$</span><span class="n">UDP</span><span class="w"> </span><span class="o">-</span><span class="n">b</span><span class="w"> </span><span class="err">$</span><span class="n">TP</span><span class="w"> </span><span class="o">-</span><span class="n">t</span><span class="w"> </span><span class="err">${</span><span class="n">D</span><span class="err">}</span><span class="w"> </span><span class="o">--</span><span class="n">json</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="err">${</span><span class="n">PROTO</span><span class="err">}</span><span class="o">-</span><span class="err">${</span><span class="n">MTU</span><span class="err">}</span><span class="o">-</span><span class="err">${</span><span class="n">TP</span><span class="err">}</span><span class="o">-</span><span class="err">${</span><span class="n">i</span><span class="err">}</span><span class="mf">.</span><span class="n">json</span><span class="p">;</span>
+</code></pre></div>
+  <footer>
+    <!-- <p>Published: <time datetime="2026-03-19T00:00:00+00:00"> -->
+    <!--     Thu 19 March 2026 -->
+    <!--   </time></p> -->
+    <address>
+      By       <a href="./author/antony-antony.html">Antony Antony</a>
+    </address>
+    <p>
+      <a href="./category/research.html">Research</a>
+    </p>
+  </footer>
+</article>
+      </main>
+<footer class="flex flex-row mt-16 py-16 border-t-3 border-t-black dark:border-t-neutral-200">
+  <a href="."><img class="size-28" src="./images/logo.png"></a>
+  <a class="my-auto underline ms-auto" href="mailto:info@linux-ipsec.org">info@linux.ipsec.org</a>
+</footer>    </div>
+  </body>
+</html>
